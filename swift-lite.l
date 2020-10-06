@@ -14,16 +14,18 @@ typedef enum yytokentype {
         TYPE = 3,
         INTEGER = 4,
         FLOAT = 5,
-        ID = 6,
-        OPERATOR = 7,
-		MOV = 8,
-		BRACKET = 9,
-		EOL = 10
+		CHAR = 6,
+        ID = 7,
+        OPERATOR = 8,
+		MOV = 9,
+		BRACKET = 10,
+		EOL = 11
 } YYTOKEN;
 
 typedef union {
 	int type_int;
 	float type_float;
+	char type_char;
 	char type_id[32];
     char type_operator[2];
 	TYPE type_type;
@@ -32,11 +34,12 @@ typedef union {
 %}
 
 %%
-(let)|(var)									{strcpy(yylval.type_id,yytext);return NEW;}
+(let)|(var)									{strcpy(yylval.type_id,yytext);  return NEW;}
 [:]											{return ANNOUNCE;}
-(Char)										{yylval.type_type=Char,return TYPE;}
-(Int)										{yylval.type_type=Int,return TYPE;}
-(Float)										{yylval.type_type=Float,return TYPE;}
+(Char)										{yylval.type_type=Char;  return TYPE;}
+(Int)										{yylval.type_type=Int;  return TYPE;}
+(Float)										{yylval.type_type=Float;  return TYPE;}
+(')[A-Za-z0-9_](')							{yylval.type_char=yytext[1];  return CHAR;}
 [+-]?0.[0-9]*|[+-]?[1-9][0-9]*.[0-9]*       {yylval.type_float=atof(yytext); return FLOAT;}
 0|[+-]?[1-9][0-9]*                          {yylval.type_int=atoi(yytext);	return INTEGER;}
 [_a-zA-Z][_a-zA-Z0-9]*                      {strcpy(yylval.type_id,yytext);	return ID;}
