@@ -6,14 +6,14 @@ typedef union {
 	int type_int;
 	float type_float;
 	char type_id[32];
-    char type_operator[2];
+    char type_operator[32];
+
 } YYLVAL;
 #define YYSTYPE YYLVAL
 %}
 
 %%
-(let)										{return LET;}
-(var)										{return VAR;}
+(let)|(var)									{strcpy(yylval.type_id,yytext);return NEW;}
 [:]											{return ANNOUNCE;}
 (Char)										{return TYPE_CHAR;}
 (Int)										{return TYPE_INT;}
