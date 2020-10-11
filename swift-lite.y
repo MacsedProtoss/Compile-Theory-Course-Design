@@ -59,8 +59,6 @@ ExtDef:   Specifier ExtDecList SEMI   {$$=make_node(2,EXT_VAR_DEF,yylineno,$1,$2
          |Specifier FuncDec CompSt    {$$=make_node(3,FUNC_DEF,yylineno,$1,$2,$3);}
          | error SEMI   {$$=NULL;}
          ;
-Specifier:  TYPE    {$$=make_node(0,TYPE,yylineno);$$->type_id = $1;$$->type=($1 == "float")?FLOAT:INT;}   
-           ;
 ExtDecList:  VarDec      {$$=$1;}
            | VarDec COMMA ExtDecList {$$=make_node(2,EXT_DEC_LIST,yylineno,$1,$3);}
            ;  
@@ -79,28 +77,7 @@ ParamDec: Specifier VarDec         {$$=make_node(2,PARAM_DEC,yylineno,$1,$2);}
 CompSt: LC DefList StmList RC    {$$=make_node(2,COMP_STM,yylineno,$2,$3);}
        ;
 
-StmList: {$$=NULL; }  
-        | Stmt StmList  {$$=make_node(2,STM_LIST,yylineno,$1,$2);}
-        ;
-Stmt:   Exp SEMI    {$$=make_node(1,EXP_STMT,yylineno,$1);}
-      | CompSt      {$$=$1;}
-      | RETURN Exp SEMI   {$$=make_node(1,RETURN,yylineno,$2);}
-      | IF LP Exp RP Stmt %prec LOWER_THEN_ELSE   {$$=make_node(2,IF_THEN,yylineno,$3,$5);}
-      | IF LP Exp RP Stmt ELSE Stmt   {$$=make_node(3,IF_THEN_ELSE,yylineno,$3,$5,$7);}
-      | WHILE LP Exp RP Stmt {$$=make_node(2,WHILE,yylineno,$3,$5);}
-      ;
-DefList: {$$=NULL; }
-        | Def DefList {$$=make_node(2,DEF_LIST,yylineno,$1,$2);}
-        | error SEMI   {$$=NULL;}
-        ;
-Def:    Specifier DecList SEMI {$$=make_node(2,VAR_DEF,yylineno,$1,$2);}
-        ;
-DecList: Dec  {$$=make_node(1,DEC_LIST,yylineno,$1);}
-       | Dec COMMA DecList  {$$=make_node(2,DEC_LIST,yylineno,$1,$3);}
-	   ;
-Dec:     VarDec  {$$=$1;}
-       | VarDec ASSIGNOP Exp  {$$=make_node(2,ASSIGNOP,yylineno,$1,$3);$$->type_id = "ASSIGNOP";}
-       ;
+
 Exp:    Exp ASSIGN Exp  {$$=make_node(2,ASSIGN,yylineno,$1,$3);$$->type_id = "ASSIGN";}
       | Exp AND Exp     {$$=make_node(2,AND,yylineno,$1,$3);$$->type_id = "AND";}
       | Exp OR Exp      {$$=make_node(2,OR,yylineno,$1,$3);$$->type_id = "OR";}
@@ -120,7 +97,6 @@ Exp:    Exp ASSIGN Exp  {$$=make_node(2,ASSIGN,yylineno,$1,$3);$$->type_id = "AS
 
       | ID LBR Args RBR {$$=make_node(1,FUNC_CALL,yylineno,$3);$$->type_id = $1;} 
       | ID LBR RBR      {$$=make_node(0,FUNC_CALL,yylineno);$$->type_id = $1;}
-      | NEW ID ANNOUNCE TYPE {$$=make_node(2,FUNC_CALL,yylineno,$1,$3);$$->type_id = "VAR_ANNOUNCE";}
 
       | ID              {$$=make_node(ID,yylineno);$$->type_id = $1;}
       | INT             {$$=make_node(INT,yylineno);$$->type_int=$1;$$->type=INT;}
@@ -129,10 +105,10 @@ Exp:    Exp ASSIGN Exp  {$$=make_node(2,ASSIGN,yylineno,$1,$3);$$->type_id = "AS
       ;
 STATEMENT:
         WHOLESTATEMENT {$$=$1;}
-      | FUNC ID LBR RBR STATEMENT {$$=make_node(2,FUNC_ANNOUNCE,yylineno,$1,$5);$$->type_id = "FUNC_ANNOUNCE";}
-      | FUNC ID LBR Args RBR STATEMENT {$$=make_node(3,FUNC_ANNOUNCE,yylineno,$1,$3,$6);$$->type_id = "FUNC_ANNOUNCE";}
-      | FUNC ID LBR RBR FUNC_RETURN_TYPE TYPE STATEMENT {$$=make_node(3,FUNC_ANNOUNCE,yylineno,$1,$5,$7);$$->type_id = "FUNC_ANNOUNCE";}
-      | FUNC ID LBR Args RBR FUNC_RETURN_TYPE TYPE STATEMENT {$$=make_node(4,FUNC_ANNOUNCE,yylineno,$1,$3,$6,$8);$$->type_id = "FUNC_ANNOUNCE";}
+      | FUNC ID LBR RBR STATEMENT {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$5});$$->type_id = "FUNC_ANNOUNCE";}
+      | FUNC ID LBR FUNCANNOUNCEARGS RBR STATEMENT {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$4,$6});$$->type_id = "FUNC_ANNOUNCE";}
+      | FUNC ID LBR RBR FUNC_RETURN_TYPE TYPE STATEMENT {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$6,$7});$$->type_id = "FUNC_ANNOUNCE";}
+      | FUNC ID LBR FUNCANNOUNCEARGS RBR FUNC_RETURN_TYPE TYPE STATEMENT {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$4,$7,$8});$$->type_id = "FUNC_ANNOUNCE";}
       
       | IF LBR Exp RBR STATEMENT %prec LOWER_THEN_ELSE {$$=make_node(IF_THEN,yylineno,{$3,$5});$$->type_id = "IF_THEN";}
       | IF LBR Exp RP STATEMENT ELSE STATEMENT {$$=make_node(IF_THEN_ELSE,yylineno,{$3,$5,$7});$$->type_id = "IF_THEN_ELSE";}
@@ -147,15 +123,49 @@ STATEMENT:
       ;
     
 WHOLESTATEMENT:
-        LCBR STATEMENTLIST RCBR {$$=make_node(WHOLESTATEMENT,yylineno,{$1});}
+        LCBR STATEMENTLIST RCBR {$$=make_node(WHOLE_STATEMENT,yylineno,{$1});}
       ;
 STATEMENTLIST:
         {$$=NULL;}
-      | STATEMENT STATEMENTLIST {$$=make_node(STATEMENTLIST,yylineno,{$1,$2});}
+      | STATEMENT STATEMENTLIST {$$=make_node(STATEMENT_LIST,yylineno,{$1,$2});}
       ;
-Args:    Exp COMMA Args    {$$=make_node(2,ARGS,yylineno,$1,$3);}
-       | Exp               {$$=make_node(1,ARGS,yylineno,$1);}
-       ;
+
+Args:
+        Exp COMMA Args    {$$=make_node(ARGS,yylineno,{$1,$3});}
+      | Exp               {$$=make_node(ARGS,yylineno,{$1});}
+        ;
+FUNCANNOUNCEARGS:
+        ANNOUNCEARG {$$=make_node(FUNC_ARG_ANNOUNCE,yylineno,{$1});}
+      | ANNOUNCEARG COMMA FUNCANNOUNCEARGS {$$=make_node(FUNC_ARG_ANNOUNCE,yylineno,{$1,$3});}
+        ;
+
+ANNOUNCEARG:
+        VAR ANNOUNCE Specifier {$$=make_node(ARG_ANNOUNCE,yylineno);}
+        ;
+
+VARLIST:
+        VAR {$$=make_node(VAR_LIST,yylineno,{$1});}
+      | VAR COMMA VARLIST {$$=make_node(VAR_LIST,yylineno,{$1,$3});}
+      ;
+VAR:
+        ID {$$=make_node(ID,yylineno);$$->type_id = $1;}
+        ;
+Specifier:
+        TYPE {$$=make_node(TYPE,yylineno);$$->type_type = $1;}
+        ;
+DEFINE:
+        NEW VARLIST ANNOUNCE Specifier {$$=make_node(VAR_DEFINE,yylineno,{$2,$4});$$->type_id = "VAR_DEFINE";}
+        ;
+DEFINEASSIGN:
+        DEFINE ASSIGN Exp {$$=make_node(ASSIGN,yylineno,{$1,$3});}
+        ;
+DEFINELIST:
+        {$$=NULL;}
+      | DEFINE {$$=make_node(DEFINE_LIST,yylineno,{$1});}
+      | DEFINEASSIGN {$$=make_node(DEFINE_LIST,yylineno,{$1});}
+      | error EOL {$$=NULL;}
+
+
        
 %%
 
