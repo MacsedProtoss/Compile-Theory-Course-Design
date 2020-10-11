@@ -18,9 +18,9 @@ int yylex();
 	float type_float;
 	char type_char;
 	char type_id[32];
-    char type_cmp[2];
+        char type_cmp[2];
 	TYPE type_type;
-    class ASTNode *ptr;
+        class ASTNode *ptr;
 };
 
 %type  <ptr> program ExtDefList ExtDef  Specifier ExtDecList FuncDec CompSt VarList VarDec ParamDec Stmt StmList DefList Def DecList Dec Exp Args
@@ -32,44 +32,18 @@ int yylex();
 %token <type_type> TYPE
 %token <type_cmp> COMPARE
 
-
-"&&"										{return AND;}
-"||"										{return OR};
-"!"											{return NOT;}
-
-"+"											{return PLUS;}
-"-"											{return MINUS;}
-"*"											{return MULTI;}
-"/"											{return DIVID;}
-
-"++"										{return INCREASE;}
-"--"										{return DECREASE;}
-
-"("											{return LBR}
-")"											{return RBR}
-"{"											{return LCBR}
-"}"											{return RCBR}
-
-"="											{return ASSIGN;}
-
-"return"     								{return RETURN;}
-"if"         								{return IF;}
-"else"       								{return ELSE;}
-"while"      								{return WHILE;}
-"\n"|";"	                                {return EOL;}
-
-%token NEW ANNOUNCE ASSIGN LBR RBR LCBR RCBR RETURN IF ELSE WHILE EOL
-%token AND OR NOT PLUS MINUS MULTI DIVID INCREASE DECREASE
+%token NEW ANNOUNCE ASSIGN LBR RBR LCBR RCBR RETURN IF ELSE WHILE BREAK CONTINUE FUNC FUNC_RETURN_TYPE EOL
+%token AND OR NOT PLUS MINUS MULTI DIVID INCREASE DECREASE 
+%token FUNC_CALL 
 
 
-%left ASSIGNOP
+%left ASSIGN
 %left OR
 %left AND
-%left RELOP
+%left COMPARE
 %left PLUS MINUS
-%left STAR DIV
-%left MOD
-%right UMINUS NOT DPLUS
+%left MULTI DIVID
+%right INCREASE NOT DECREASE
 
 %nonassoc LOWER_THEN_ELSE
 %nonassoc ELSE
@@ -127,25 +101,57 @@ DecList: Dec  {$$=make_node(1,DEC_LIST,yylineno,$1);}
 Dec:     VarDec  {$$=$1;}
        | VarDec ASSIGNOP Exp  {$$=make_node(2,ASSIGNOP,yylineno,$1,$3);$$->type_id = "ASSIGNOP";}
        ;
-Exp:    Exp ASSIGNOP Exp {$$=make_node(2,ASSIGNOP,yylineno,$1,$3);$$->type_id = "ASSIGNOP";}
-      | Exp AND Exp   {$$=make_node(2,AND,yylineno,$1,$3);$$->type_id = "AND";}
-      | Exp OR Exp    {$$=make_node(2,OR,yylineno,$1,$3);$$->type_id = "OR";}
-      | Exp RELOP Exp {$$=make_node(2,RELOP,yylineno,$1,$3);$$->type_id = $2;}
-      | Exp PLUS Exp  {$$=make_node(2,PLUS,yylineno,$1,$3);$$->type_id = "PLUS";}
-      | Exp MINUS Exp {$$=make_node(2,MINUS,yylineno,$1,$3);$$->type_id = "MINUS";}
-      | Exp STAR Exp  {$$=make_node(2,STAR,yylineno,$1,$3);$$->type_id = "STAR";}
-      | Exp MOD Exp  {$$=make_node(2,MOD,yylineno,$1,$3);$$->type_id = "MOD";}
-      | Exp DIV Exp   {$$=make_node(2,DIV,yylineno,$1,$3);$$->type_id = "DIV";}
-      | LP Exp RP     {$$=$2;}
-      | MINUS Exp %prec UMINUS   {$$=make_node(1,UMINUS,yylineno,$2);$$->type_id = "UMINUS";}
-      | NOT Exp       {$$=make_node(1,NOT,yylineno,$2);$$->type_id = "NOT";}
-      | DPLUS  Exp      {$$=make_node(1,DPLUS,yylineno,$2);$$->type_id = "DPLUS";}
-      |   Exp DPLUS      {$$=make_node(1,DPLUS,yylineno,$1);$$->type_id = "DPLUS";}
-      | ID LP Args RP {$$=make_node(1,FUNC_CALL,yylineno,$3);$$->type_id = $1;}
-      | ID LP RP      {$$=make_node(0,FUNC_CALL,yylineno);$$->type_id = $1;}
-      | ID            {$$=make_node(0,ID,yylineno);$$->type_id = $1;}
-      | INT           {$$=make_node(0,INT,yylineno);$$->type_int=$1;$$->type=INT;}
-      | FLOAT         {$$=make_node(0,FLOAT,yylineno);$$->type_float=$1;$$->type=FLOAT;}
+Exp:    Exp ASSIGN Exp  {$$=make_node(2,ASSIGN,yylineno,$1,$3);$$->type_id = "ASSIGN";}
+      | Exp AND Exp     {$$=make_node(2,AND,yylineno,$1,$3);$$->type_id = "AND";}
+      | Exp OR Exp      {$$=make_node(2,OR,yylineno,$1,$3);$$->type_id = "OR";}
+      | Exp COMPARE Exp {$$=make_node(2,COMPARE,yylineno,$1,$3);$$->type_id = $2;}
+      | Exp PLUS Exp    {$$=make_node(2,PLUS,yylineno,$1,$3);$$->type_id = "PLUS";}
+      | Exp MINUS Exp   {$$=make_node(2,MINUS,yylineno,$1,$3);$$->type_id = "MINUS";}
+      | Exp MULTI Exp   {$$=make_node(2,MULTI,yylineno,$1,$3);$$->type_id = "MULTI";}
+      | Exp DIVID Exp   {$$=make_node(2,DIVID,yylineno,$1,$3);$$->type_id = "DIVID";}
+
+      | LBR Exp RBR     {$$=$2;}
+
+      | NOT Exp         {$$=make_node(1,NOT,yylineno,$2);$$->type_id = "NOT";}
+      | INCREASE Exp    {$$=make_node(1,INCREASE,yylineno,$2);$$->type_id = "INCREASE";}
+      | Exp INCREASE    {$$=make_node(1,INCREASE,yylineno,$1);$$->type_id = "INCREASE";}
+      | DECREASE Exp    {$$=make_node(1,INCREASE,yylineno,$2);$$->type_id = "DECREASE";}
+      | Exp DECREASE    {$$=make_node(1,INCREASE,yylineno,$1);$$->type_id = "DECREASE";}
+
+      | ID LBR Args RBR {$$=make_node(1,FUNC_CALL,yylineno,$3);$$->type_id = $1;} 
+      | ID LBR RBR      {$$=make_node(0,FUNC_CALL,yylineno);$$->type_id = $1;}
+      | NEW ID ANNOUNCE TYPE {$$=make_node(2,FUNC_CALL,yylineno,$1,$3);$$->type_id = "VAR_ANNOUNCE";}
+
+      | ID              {$$=make_node(ID,yylineno);$$->type_id = $1;}
+      | INT             {$$=make_node(INT,yylineno);$$->type_int=$1;$$->type=INT;}
+      | FLOAT           {$$=make_node(FLOAT,yylineno);$$->type_float=$1;$$->type=FLOAT;}
+      | CHAR            {$$=make_node(CHAR,yylineno);$$->type_char=$1;$$->type=CHAR;}
+      ;
+STATEMENT:
+        WHOLESTATEMENT {$$=$1;}
+      | FUNC ID LBR RBR STATEMENT {$$=make_node(2,FUNC_ANNOUNCE,yylineno,$1,$5);$$->type_id = "FUNC_ANNOUNCE";}
+      | FUNC ID LBR Args RBR STATEMENT {$$=make_node(3,FUNC_ANNOUNCE,yylineno,$1,$3,$6);$$->type_id = "FUNC_ANNOUNCE";}
+      | FUNC ID LBR RBR FUNC_RETURN_TYPE TYPE STATEMENT {$$=make_node(3,FUNC_ANNOUNCE,yylineno,$1,$5,$7);$$->type_id = "FUNC_ANNOUNCE";}
+      | FUNC ID LBR Args RBR FUNC_RETURN_TYPE TYPE STATEMENT {$$=make_node(4,FUNC_ANNOUNCE,yylineno,$1,$3,$6,$8);$$->type_id = "FUNC_ANNOUNCE";}
+      
+      | IF LBR Exp RBR STATEMENT %prec LOWER_THEN_ELSE {$$=make_node(IF_THEN,yylineno,{$3,$5});$$->type_id = "IF_THEN";}
+      | IF LBR Exp RP STATEMENT ELSE STATEMENT {$$=make_node(IF_THEN_ELSE,yylineno,{$3,$5,$7});$$->type_id = "IF_THEN_ELSE";}
+      
+      | WHILE LBR Exp RBR STATEMENT {$$=make_node(WHILE,yylineno,{$3,$5});$$->type_id = "WHILE";}
+
+      | BREAK EOL {$$=make_node(BREAK,yylineno);}
+      | CONTINUE EOL {$$=make_node(CONTINUE,yylineno);}
+      | RETURN Exp EOL   {$$=make_node(RETURN,yylineno,{$2});}
+      | Exp EOL {$$=make_node(1,Exp_STATMENT,yylineno,$1);}
+      | EOL {$$=NULL;}
+      ;
+    
+WHOLESTATEMENT:
+        LCBR STATEMENTLIST RCBR {$$=make_node(WHOLESTATEMENT,yylineno,{$1});}
+      ;
+STATEMENTLIST:
+        {$$=NULL;}
+      | STATEMENT STATEMENTLIST {$$=make_node(STATEMENTLIST,yylineno,{$1,$2});}
       ;
 Args:    Exp COMMA Args    {$$=make_node(2,ARGS,yylineno,$1,$3);}
        | Exp               {$$=make_node(1,ARGS,yylineno,$1);}

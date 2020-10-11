@@ -59,7 +59,15 @@ typedef union {
 "if"         								{return IF;}
 "else"       								{return ELSE;}
 "while"      								{return WHILE;}
-"\n"|";"	                                {return EOL;}
+"break"      								{return BREAK;}
+"continue"      							{return CONTINUE;}
+
+"func"										{return FUNC;}
+"->"										{return FUNC_RETURN_TYPE;}
+
+[,]											{return COMMA}
+
+[\n;]	                                	{return EOL;}
 [ \r\t]     								{}
 
 .                                           {printf("Error type A :Mysterious character \"%s\"\n\t at Line %d\n", yytext, yylineno);}
