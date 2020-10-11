@@ -50,35 +50,8 @@ int yylex();
 
 %%
 
-program: ExtDefList    { display($1,0); entrypoint($1);}
-         ;
-ExtDefList: {$$=NULL;}
-          | ExtDef ExtDefList {$$=make_node(2,EXT_DEF_LIST,yylineno,$1,$2);}
-          ;
-ExtDef:   Specifier ExtDecList SEMI   {$$=make_node(2,EXT_VAR_DEF,yylineno,$1,$2);}
-         |Specifier FuncDec CompSt    {$$=make_node(3,FUNC_DEF,yylineno,$1,$2,$3);}
-         | error SEMI   {$$=NULL;}
-         ;
-ExtDecList:  VarDec      {$$=$1;}
-           | VarDec COMMA ExtDecList {$$=make_node(2,EXT_DEC_LIST,yylineno,$1,$3);}
-           ;  
-VarDec:  ID          {$$=make_node(0,ID,yylineno);$$->type_id = $1;}
-         ;
-FuncDec: ID LP VarList RP   {$$=make_node(1,FUNC_DEC,yylineno,$3);$$->type_id = $1;}
-		|ID LP  RP   {$$=make_node(0,FUNC_DEC,yylineno);$$->type_id = $1;$$->ptr[0]=NULL;}
-
-        ;
-VarList: ParamDec  {$$=make_node(1,PARAM_LIST,yylineno,$1);}
-        | ParamDec COMMA  VarList  {$$=make_node(2,PARAM_LIST,yylineno,$1,$3);}
-        ;
-ParamDec: Specifier VarDec         {$$=make_node(2,PARAM_DEC,yylineno,$1,$2);}
-         ;
-
-CompSt: LC DefList StmList RC    {$$=make_node(2,COMP_STM,yylineno,$2,$3);}
-       ;
-
-
-Exp:    Exp ASSIGN Exp  {$$=make_node(2,ASSIGN,yylineno,$1,$3);$$->type_id = "ASSIGN";}
+Exp:
+        Exp ASSIGN Exp  {$$=make_node(2,ASSIGN,yylineno,$1,$3);$$->type_id = "ASSIGN";}
       | Exp AND Exp     {$$=make_node(2,AND,yylineno,$1,$3);$$->type_id = "AND";}
       | Exp OR Exp      {$$=make_node(2,OR,yylineno,$1,$3);$$->type_id = "OR";}
       | Exp COMPARE Exp {$$=make_node(2,COMPARE,yylineno,$1,$3);$$->type_id = $2;}
@@ -106,9 +79,9 @@ Exp:    Exp ASSIGN Exp  {$$=make_node(2,ASSIGN,yylineno,$1,$3);$$->type_id = "AS
 STATEMENT:
         WHOLESTATEMENT {$$=$1;}
       | FUNC ID LBR RBR STATEMENT {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$5});$$->type_id = "FUNC_ANNOUNCE";}
-      | FUNC ID LBR FUNCANNOUNCEARGS RBR STATEMENT {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$4,$6});$$->type_id = "FUNC_ANNOUNCE";}
+      | FUNC ID LBR PARAMETERS RBR STATEMENT {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$4,$6});$$->type_id = "FUNC_ANNOUNCE";}
       | FUNC ID LBR RBR FUNC_RETURN_TYPE TYPE STATEMENT {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$6,$7});$$->type_id = "FUNC_ANNOUNCE";}
-      | FUNC ID LBR FUNCANNOUNCEARGS RBR FUNC_RETURN_TYPE TYPE STATEMENT {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$4,$7,$8});$$->type_id = "FUNC_ANNOUNCE";}
+      | FUNC ID LBR PARAMETERS RBR FUNC_RETURN_TYPE TYPE STATEMENT {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$4,$7,$8});$$->type_id = "FUNC_ANNOUNCE";}
       
       | IF LBR Exp RBR STATEMENT %prec LOWER_THEN_ELSE {$$=make_node(IF_THEN,yylineno,{$3,$5});$$->type_id = "IF_THEN";}
       | IF LBR Exp RP STATEMENT ELSE STATEMENT {$$=make_node(IF_THEN_ELSE,yylineno,{$3,$5,$7});$$->type_id = "IF_THEN_ELSE";}
@@ -134,13 +107,13 @@ Args:
         Exp COMMA Args    {$$=make_node(ARGS,yylineno,{$1,$3});}
       | Exp               {$$=make_node(ARGS,yylineno,{$1});}
         ;
-FUNCANNOUNCEARGS:
-        ANNOUNCEARG {$$=make_node(FUNC_ARG_ANNOUNCE,yylineno,{$1});}
-      | ANNOUNCEARG COMMA FUNCANNOUNCEARGS {$$=make_node(FUNC_ARG_ANNOUNCE,yylineno,{$1,$3});}
+PARAMETERS:
+        PARAMETER {$$=make_node(FUNC_PARAMETERS,yylineno,{$1});}
+      | PARAMETER COMMA PARAMETERS {$$=make_node(FUNC_PARAMETERS,yylineno,{$1,$3});}
         ;
 
-ANNOUNCEARG:
-        VAR ANNOUNCE Specifier {$$=make_node(ARG_ANNOUNCE,yylineno);}
+PARAMETER:
+        VAR ANNOUNCE Specifier {$$=make_node(FUNC_PARAMETER,yylineno);}
         ;
 
 VARLIST:
@@ -178,6 +151,7 @@ int main(int argc, char *argv[]) {
 }
 
 #include<stdarg.h>
+
 void yyerror(const char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
