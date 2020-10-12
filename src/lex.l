@@ -7,19 +7,12 @@ int yycolumn=1;
 #define YY_USER_ACTION    	yylloc.first_line=yylloc.last_line=yylineno; \
 	yylloc.first_column=yycolumn;	yylloc.last_column=yycolumn+yyleng-1; yycolumn+=yyleng;
 
-typedef enum{
-	Char = 1,
-	Int = 2,
-	Float = 3
-} TYPE;
-
 typedef union {
 	int intValue;
 	float floatValue;
 	char charValue;
 	char idValue[32];
     char cmpCommand[2];
-	TYPE type;
 } YYLVAL;
 #define YYSTYPE YYLVAL
 %}
@@ -27,9 +20,9 @@ typedef union {
 %%
 "var"										{strcpy(yylval.idValue,yytext);  return NEW;}
 ":"											{return ANNOUNCE;}
-"Char"										{yylval.type=Char;  return TYPE;}
-"Int"										{yylval.type=Int;  return TYPE;}
-"Float"										{yylval.type=Float;  return TYPE;}
+"Char"										{strcpy(yylval.idValue,yytext);  return TYPE;}
+"Int"										{strcpy(yylval.idValue,yytext);  return TYPE;}
+"Float"										{strcpy(yylval.idValue,yytext);  return TYPE;}
 "'"[A-Za-z0-9_]"'"							{yylval.charValue=yytext[1];  return CHAR;}
 [+-]?0.[0-9]*|[+-]?[1-9][0-9]*.[0-9]*       {yylval.floatValue=atof(yytext); return FLOAT;}
 0|[+-]?[1-9][0-9]*                          {yylval.intValue=atoi(yytext);	return INTEGER;}
@@ -38,7 +31,7 @@ typedef union {
 ">"|"<"|">="|"<="|"=="|"!="					{strcpy(yylval.cmpCommand,yytext);	return COMPARE;}
 
 "&&"										{return AND;}
-"||"										{return OR};
+"||"										{return OR;}
 "!"											{return NOT;}
 
 "+"											{return PLUS;}

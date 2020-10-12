@@ -1,0 +1,35 @@
+{
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "C/C++: g++ build active file",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-g",
+                "./src/analysis.cc",
+                "./src/ast.cc",
+                "./src/lex.yy.cc",
+                "./src/parser.tab.cc",
+                "./src/ir.cc",
+                "./src/functions.cc",
+                "-I/usr/lib/llvm-10/include",
+                "-L/usr/lib/llvm-10/lib",
+                "-lLLVM-10",
+                "-std=c++2a",
+                "-o",
+                "./parser"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ],
+    "version": "2.0.0"
+}

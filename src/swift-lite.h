@@ -62,7 +62,7 @@ public:
     int idx;
     string Etrue, Efalse, Snext;
     shared_ptr<CodeNode> code;
-    int type;
+    string type;
     int pos;
     int num;
 
