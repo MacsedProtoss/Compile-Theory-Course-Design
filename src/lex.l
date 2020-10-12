@@ -1,5 +1,5 @@
 %{
-#include "lex.tab.h"
+#include "parser.tab.h"
 #include "stdio.h"
 #include "string.h"
 #include "swift-lite.h"
@@ -14,28 +14,28 @@ typedef enum{
 } TYPE;
 
 typedef union {
-	int type_int;
-	float type_float;
-	char type_char;
-	char type_id[32];
-	char type_cmp[2];
-	TYPE type_type;
+	int intValue;
+	float floatValue;
+	char charValue;
+	char idValue[32];
+    char cmpCommand[2];
+	TYPE type;
 } YYLVAL;
 #define YYSTYPE YYLVAL
 %}
 
 %%
-"var"										{strcpy(yylval.type_id,yytext);  return NEW;}
+"var"										{strcpy(yylval.idValue,yytext);  return NEW;}
 ":"											{return ANNOUNCE;}
-"Char"										{yylval.type_type=Char;  return TYPE;}
-"Int"										{yylval.type_type=Int;  return TYPE;}
-"Float"										{yylval.type_type=Float;  return TYPE;}
-"'"[A-Za-z0-9_]"'"							{yylval.type_char=yytext[1];  return CHAR;}
-[+-]?0.[0-9]*|[+-]?[1-9][0-9]*.[0-9]*       {yylval.type_float=atof(yytext); return FLOAT;}
-0|[+-]?[1-9][0-9]*                          {yylval.type_int=atoi(yytext);	return INTEGER;}
-[_a-zA-Z][_a-zA-Z0-9]*                      {strcpy(yylval.type_id,yytext);	return ID;}
+"Char"										{yylval.type=Char;  return TYPE;}
+"Int"										{yylval.type=Int;  return TYPE;}
+"Float"										{yylval.type=Float;  return TYPE;}
+"'"[A-Za-z0-9_]"'"							{yylval.charValue=yytext[1];  return CHAR;}
+[+-]?0.[0-9]*|[+-]?[1-9][0-9]*.[0-9]*       {yylval.floatValue=atof(yytext); return FLOAT;}
+0|[+-]?[1-9][0-9]*                          {yylval.intValue=atoi(yytext);	return INTEGER;}
+[_a-zA-Z][_a-zA-Z0-9]*                      {strcpy(yylval.idValue,yytext);	return ID;}
 
-">"|"<"|">="|"<="|"=="|"!="					{strcpy(yylval.type_cmp,yytext);	return COMPARE;}
+">"|"<"|">="|"<="|"=="|"!="					{strcpy(yylval.cmpCommand,yytext);	return COMPARE;}
 
 "&&"										{return AND;}
 "||"										{return OR};
@@ -49,10 +49,10 @@ typedef union {
 "++"										{return INCREASE;}
 "--"										{return DECREASE;}
 
-"("											{return LBR}
-")"											{return RBR}
-"{"											{return LCBR}
-"}"											{return RCBR}
+"("											{return LBR;}
+")"											{return RBR;}
+"{"											{return LCBR;}
+"}"											{return RCBR;}
 
 "="											{return ASSIGN;}
 
@@ -66,7 +66,7 @@ typedef union {
 "func"										{return FUNC;}
 "->"										{return FUNC_RETURN_TYPE;}
 
-[,]											{return COMMA}
+[,]											{return COMMA;}
 
 [\n;]	                                	{return EOL;}
 [ \r\t]     								{}

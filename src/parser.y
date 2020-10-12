@@ -1,4 +1,4 @@
-%define parse.error verbose
+%error-verbose
 %locations
 %{
 #include "stdio.h"
@@ -24,7 +24,7 @@ int yylex();
         class ASTNode *ptr;
 };
 
-%type  <ptr> program ExtDefList ExtDef  Specifier ExtDecList FuncDec CompSt VarList VarDec ParamDec Stmt StmList DefList Def DecList Dec Exp Args
+%type  <ptr> Exp STATEMENT WHOLESTATEMENT STATEMENTLIST Args PARAMETERS PARAMETER VARLIST VAR Specifier DEFINE DEFINEASSIGN DEFINELIST
 
 %token <intValue> INTEGER
 %token <idValue> ID
@@ -33,7 +33,7 @@ int yylex();
 %token <type> TYPE
 %token <cmpCommand> COMPARE
 
-%token NEW ANNOUNCE ASSIGN LBR RBR LCBR RCBR RETURN IF ELSE WHILE BREAK CONTINUE FUNC FUNC_RETURN_TYPE EOL
+%token NEW ANNOUNCE ASSIGN LBR RBR LCBR RCBR RETURN IF ELSE WHILE BREAK CONTINUE FUNC FUNC_RETURN_TYPE COMMA EOL
 %token AND OR NOT PLUS MINUS MULTI DIVID INCREASE DECREASE 
 %token FUNC_CALL FUNC_ANNOUNCE IF_THEN IF_THEN_ELSE Exp_STATMENT WHOLE_STATEMENT STATEMENT_LIST ARGS FUNC_PARAMETERS FUNC_PARAMETER 
 %token VAR_LIST VAR_DEFINE DEFINE_ASSIGN DEFINE_LIST
@@ -56,7 +56,7 @@ Exp:
         Exp ASSIGN Exp  {$$=make_node(ASSIGN,yylineno,{$1,$3});}
       | Exp AND Exp     {$$=make_node(AND,yylineno,{$1,$3});}
       | Exp OR Exp      {$$=make_node(OR,yylineno,{$1,$3});}
-      | Exp COMPARE Exp {$$=make_node(COMPARE,yylineno,{$1,$3});$$->cmpCommand = $2;}
+      | Exp COMPARE Exp {$$=make_node(COMPARE,yylineno,{$1,$3});$$->data = $2;}
       | Exp PLUS Exp    {$$=make_node(PLUS,yylineno,{$1,$3});}
       | Exp MINUS Exp   {$$=make_node(MINUS,yylineno,{$1,$3});}
       | Exp MULTI Exp   {$$=make_node(MULTI,yylineno,{$1,$3});}
@@ -70,13 +70,13 @@ Exp:
       | DECREASE Exp    {$$=make_node(DECREASE,yylineno,{$2});}
       | Exp DECREASE    {$$=make_node(DECREASE,yylineno,{$1});}
 
-      | ID LBR Args RBR {$$=make_node(FUNC_CALL,yylineno,{$3});$$->idValue = $1;} 
-      | ID LBR RBR      {$$=make_node(FUNC_CALL,yylineno);$$->idValue = $1;}
+      | ID LBR Args RBR {$$=make_node(FUNC_CALL,yylineno,{$3});$$->data = $1;} 
+      | ID LBR RBR      {$$=make_node(FUNC_CALL,yylineno);$$->data = $1;}
 
-      | ID              {$$=make_node(ID,yylineno);$$->idValue = $1;}
-      | INT             {$$=make_node(INT,yylineno);$$->intValue=$1;$$->type=INT;}
-      | FLOAT           {$$=make_node(FLOAT,yylineno);$$->floatValue=$1;$$->type=FLOAT;}
-      | CHAR            {$$=make_node(CHAR,yylineno);$$->charValue=$1;$$->type=CHAR;}
+      | ID              {$$=make_node(ID,yylineno);$$->data = $1;}
+      | INTEGER             {$$=make_node(INT,yylineno);$$->data=$1;$$->type=Int;}
+      | FLOAT           {$$=make_node(FLOAT,yylineno);$$->data=$1;$$->type=Float;}
+      | CHAR            {$$=make_node(CHAR,yylineno);$$->data=$1;$$->type=Char;}
       ;
 STATEMENT:
         WHOLESTATEMENT {$$=$1;}
@@ -86,7 +86,7 @@ STATEMENT:
       | FUNC VAR LBR PARAMETERS RBR FUNC_RETURN_TYPE Specifier STATEMENT {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$4,$7,$8});}
       
       | IF LBR Exp RBR STATEMENT %prec LOWER_THEN_ELSE {$$=make_node(IF_THEN,yylineno,{$3,$5});}
-      | IF LBR Exp RP STATEMENT ELSE STATEMENT {$$=make_node(IF_THEN_ELSE,yylineno,{$3,$5,$7});}
+      | IF LBR Exp RBR STATEMENT ELSE STATEMENT {$$=make_node(IF_THEN_ELSE,yylineno,{$3,$5,$7});}
       
       | WHILE LBR Exp RBR STATEMENT {$$=make_node(WHILE,yylineno,{$3,$5});}
 
@@ -98,7 +98,8 @@ STATEMENT:
       ;
     
 WHOLESTATEMENT:
-        LCBR STATEMENTLIST RCBR {$$=make_node(WHOLE_STATEMENT,yylineno,{$1});}
+        {$$=NULL;}
+      | LCBR STATEMENTLIST RCBR {$$=make_node(WHOLE_STATEMENT,yylineno,{$2});}
       ;
 STATEMENTLIST:
         {$$=NULL;}
@@ -123,7 +124,7 @@ VARLIST:
       | VAR COMMA VARLIST {$$=make_node(VAR_LIST,yylineno,{$1,$3});}
       ;
 VAR:
-        ID {$$=make_node(ID,yylineno);$$->idValue = $1;}
+        ID {$$=make_node(ID,yylineno);$$->data = $1;}
         ;
 Specifier:
         TYPE {$$=make_node(TYPE,yylineno);$$->type = $1;}
