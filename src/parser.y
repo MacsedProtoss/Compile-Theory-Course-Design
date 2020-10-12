@@ -35,7 +35,8 @@ int yylex();
 
 %token NEW ANNOUNCE ASSIGN LBR RBR LCBR RCBR RETURN IF ELSE WHILE BREAK CONTINUE FUNC FUNC_RETURN_TYPE EOL
 %token AND OR NOT PLUS MINUS MULTI DIVID INCREASE DECREASE 
-%token FUNC_CALL 
+%token FUNC_CALL FUNC_ANNOUNCE IF_THEN IF_THEN_ELSE Exp_STATMENT WHOLE_STATEMENT STATEMENT_LIST ARGS FUNC_PARAMETERS FUNC_PARAMETER 
+%token VAR_LIST VAR_DEFINE DEFINE_ASSIGN DEFINE_LIST
 
 
 %left ASSIGN
@@ -66,11 +67,11 @@ Exp:
       | NOT Exp         {$$=make_node(NOT,yylineno,{$2});}
       | INCREASE Exp    {$$=make_node(INCREASE,yylineno,{$2});}
       | Exp INCREASE    {$$=make_node(INCREASE,yylineno,{$1});}
-      | DECREASE Exp    {$$=make_node(INCREASE,yylineno,{$2});}
-      | Exp DECREASE    {$$=make_node(INCREASE,yylineno,{$1});}
+      | DECREASE Exp    {$$=make_node(DECREASE,yylineno,{$2});}
+      | Exp DECREASE    {$$=make_node(DECREASE,yylineno,{$1});}
 
-      | ID LBR Args RBR {$$=make_node(1,FUNC_CALL,yylineno,$3);$$->idValue = $1;} 
-      | ID LBR RBR      {$$=make_node(0,FUNC_CALL,yylineno);$$->idValue = $1;}
+      | ID LBR Args RBR {$$=make_node(FUNC_CALL,yylineno,{$3});$$->idValue = $1;} 
+      | ID LBR RBR      {$$=make_node(FUNC_CALL,yylineno);$$->idValue = $1;}
 
       | ID              {$$=make_node(ID,yylineno);$$->idValue = $1;}
       | INT             {$$=make_node(INT,yylineno);$$->intValue=$1;$$->type=INT;}
@@ -92,7 +93,7 @@ STATEMENT:
       | BREAK EOL {$$=make_node(BREAK,yylineno);}
       | CONTINUE EOL {$$=make_node(CONTINUE,yylineno);}
       | RETURN Exp EOL   {$$=make_node(RETURN,yylineno,{$2});}
-      | Exp EOL {$$=make_node(1,Exp_STATMENT,yylineno,$1);}
+      | Exp EOL {$$=make_node(Exp_STATMENT,yylineno,{$1});}
       | EOL {$$=NULL;}
       ;
     
@@ -131,7 +132,7 @@ DEFINE:
         NEW VARLIST ANNOUNCE Specifier {$$=make_node(VAR_DEFINE,yylineno,{$2,$4});}
         ;
 DEFINEASSIGN:
-        DEFINE ASSIGN Exp {$$=make_node(ASSIGN,yylineno,{$1,$3});}
+        DEFINE ASSIGN Exp {$$=make_node(DEFINE_ASSIGN,yylineno,{$1,$3});}
         ;
 DEFINELIST:
         {$$=NULL;}
