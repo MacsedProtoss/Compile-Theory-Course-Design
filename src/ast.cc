@@ -31,10 +31,16 @@ ASTNode *make_node(int kind, int pos, vector<ASTNode *> nodes){
 /*
 %type  <ptr> Exp STATEMENT WHOLESTATEMENT STATEMENTLIST Args PARAMETERS PARAMETER VARLIST VAR Specifier DEFINE DEFINEASSIGN DEFINELIST
 
-%token NEW ANNOUNCE ASSIGN LBR RBR LCBR RCBR RETURN IF ELSE WHILE BREAK CONTINUE FUNC FUNC_RETURN_TYPE COMMA EOL
+%token NEW ANNOUNCE LBR RBR LCBR RCBR RETURN IF ELSE WHILE BREAK CONTINUE FUNC FUNC_RETURN_TYPE COMMA EOL
 %token FUNC_CALL FUNC_ANNOUNCE IF_THEN IF_THEN_ELSE Exp_STATMENT WHOLE_STATEMENT STATEMENT_LIST ARGS FUNC_PARAMETERS FUNC_PARAMETER 
 %token VAR_LIST VAR_DEFINE DEFINE_ASSIGN DEFINE_LIST
 */
+
+void print_sub_ast_nodes(ASTNode *node, int indent,int count){
+    for (int i = 0;i < 4 && i<count;i++){
+        print_ast_node(node->ptr[i],indent + 2);
+    }
+}
 
 void print_ast_node(ASTNode *node, int indent){
     #if PRINT_AST == 0
@@ -62,21 +68,45 @@ void print_ast_node(ASTNode *node, int indent){
         case COMPARE:
             printf("%*cCOMPARE: %s\n", indent,' ', get<string>(node->data).c_str());
             break;
+        case ASSIGN:
+            printf("%*c%s: \n", indent,' ', "ASSIGN");
+            print_sub_ast_nodes(node,indent,2);
+            break;
         case AND:
+            printf("%*c%s: \n", indent,' ', "AND");
+            print_sub_ast_nodes(node,indent,2);
+            break;
         case OR:
+            printf("%*c%s: \n", indent,' ', "OR");
+            print_sub_ast_nodes(node,indent,2);
+            break;
         case PLUS:
+            printf("%*c%s: \n", indent,' ', "PLUS");
+            print_sub_ast_nodes(node,indent,2);
+            break;
         case MINUS:
+            printf("%*c%s: \n", indent,' ', "MINUS");
+            print_sub_ast_nodes(node,indent,2);
+            break;
         case MULTI:
+            printf("%*c%s: \n", indent,' ', "MULTI");
+            print_sub_ast_nodes(node,indent,2);
+            break;
         case DIVID:
-            printf("%*c%s: \n", indent,' ', get<string>(node->data).c_str());
-            print_ast_node(node->ptr[0],indent + 2);
-            print_ast_node(node->ptr[1],indent + 2);
+            printf("%*c%s: \n", indent,' ', "DIVID");
+            print_sub_ast_nodes(node,indent,2);
             break;
         case NOT:
+            printf("%*c%s: \n", indent,' ', "NOT");
+            print_sub_ast_nodes(node,indent,1);
+            break;
         case INCREASE:
+            printf("%*c%s: \n", indent,' ', "INCREASE");
+            print_sub_ast_nodes(node,indent,1);
+            break;
         case DECREASE: 
-            printf("%*c%s: \n", indent,' ', get<string>(node->data).c_str());
-            print_ast_node(node->ptr[0],indent + 2);
+            printf("%*c%s: \n", indent,' ', "DECREASE");
+            print_sub_ast_nodes(node,indent,1);
             break;
         
         default:
@@ -85,3 +115,4 @@ void print_ast_node(ASTNode *node, int indent){
     }
 
 }
+
