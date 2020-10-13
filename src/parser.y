@@ -144,9 +144,9 @@ Exp:
       | ID LBR RBR      {$$=make_node(FUNC_CALL,yylineno);$$->data = $1;}
 
       | ID              {$$=make_node(ID,yylineno);$$->data = $1;}
-      | INTEGER         {$$=make_node(INT,yylineno);$$->data=$1;$$->type=Int;}
-      | FLOAT           {$$=make_node(FLOAT,yylineno);$$->data=$1;$$->type=Float;}
-      | CHAR            {$$=make_node(CHAR,yylineno);$$->data=$1;$$->type=Char;}
+      | INTEGER         {$$=make_node(INT,yylineno);$$->data=$1;$$->type="Int";}
+      | FLOAT           {$$=make_node(FLOAT,yylineno);$$->data=$1;$$->type="Float";}
+      | CHAR            {$$=make_node(CHAR,yylineno);$$->data=$1;$$->type="Char";}
       ;       
 Args:
         Exp COMMA Args    {$$=make_node(ARGS,yylineno,{$1,$3});}
