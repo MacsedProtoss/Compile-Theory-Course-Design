@@ -22,7 +22,7 @@ int yylex();
         class ASTNode *ptr;
 };
 
-%type  <ptr> Exp STATEMENT WHOLESTATEMENT STATEMENTLIST Args PARAMETERS PARAMETER VARLIST VAR Specifier DEFINE DEFINEASSIGN DEFINELIST program ExternalDefineList ExternalDefine FUNCDEFINE
+%type  <ptr> Exp STATEMENT WHOLESTATEMENT STATEMENTLIST Args PARAMETERS PARAMETER VARLIST VAR Specifier DEFINE DEFINEASSIGN DEFINELIST program ExternalDefineList ExternalDefine FUNCDEFINE FUNCCALL
 
 %token <intValue> INTEGER
 %token <idValue> ID TYPE
@@ -53,12 +53,13 @@ program:
         ExternalDefineList {print_ast_node($1,0);entrypoint($1);}
         ;
 ExternalDefineList:
-        {$$=nullptr;}
+        ExternalDefine {$$=make_node(EXT_DEF_LIST,yylineno,{$1});}
       | ExternalDefine ExternalDefineList {$$=make_node(EXT_DEF_LIST,yylineno,{$1,$2});}        
         ;
 
 ExternalDefine:
         DEFINE {$$=$1;}
+      | DEFINEASSIGN {$$=$1;}
       | FUNCDEFINE WHOLESTATEMENT {$$=make_node(FUNCTION,yylineno,{$1,$2});}
       | error EOL {$$=nullptr;}
       | EOL {$$=nullptr;}
@@ -74,12 +75,12 @@ STATEMENT:
       | CONTINUE EOL {$$=make_node(CONTINUE,yylineno);}
       | RETURN Exp EOL   {$$=make_node(RETURN,yylineno,{$2});}
       | Exp EOL {$$=make_node(Exp_STATMENT,yylineno,{$1});}
-      | EOL {$$=NULL;}
+      | FUNCCALL EOL {$$=$1;}
+      | EOL {$$=nullptr;}
       ;
     
 WHOLESTATEMENT:
-        {$$=NULL;}
-      | LCBR DEFINELIST STATEMENTLIST RCBR {$$=make_node(WHOLE_STATEMENT,yylineno,{$2,$3});}
+      LCBR DEFINELIST STATEMENTLIST RCBR {$$=make_node(WHOLE_STATEMENT,yylineno,{$2,$3});}
       ;
 STATEMENTLIST:
         STATEMENT {$$=make_node(STATEMENT_LIST,yylineno,{$1});}
@@ -123,6 +124,10 @@ FUNCDEFINE:
       | FUNC VAR LBR RBR FUNC_RETURN_TYPE Specifier {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$6});}
       | FUNC VAR LBR PARAMETERS RBR FUNC_RETURN_TYPE Specifier {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$4,$7});}
         ;
+FUNCCALL:
+        ID LBR Args RBR {$$=make_node(FUNC_CALL,yylineno,{$3});$$->data = $1;} 
+      | ID LBR RBR      {$$=make_node(FUNC_CALL,yylineno);$$->data = $1;}
+        ;
 Exp:
         Exp ASSIGN Exp  {$$=make_node(ASSIGN,yylineno,{$1,$3});}
       | Exp AND Exp     {$$=make_node(AND,yylineno,{$1,$3});}
@@ -140,9 +145,6 @@ Exp:
       | Exp INCREASE    {$$=make_node(INCREASE,yylineno,{$1});}
       | DECREASE Exp    {$$=make_node(DECREASE,yylineno,{$2});}
       | Exp DECREASE    {$$=make_node(DECREASE,yylineno,{$1});}
-
-      | ID LBR Args RBR {$$=make_node(FUNC_CALL,yylineno,{$3});$$->data = $1;} 
-      | ID LBR RBR      {$$=make_node(FUNC_CALL,yylineno);$$->data = $1;}
 
       | ID              {$$=make_node(ID,yylineno);$$->data = $1;}
       | INTEGER         {$$=make_node(INTEGER,yylineno);$$->data=$1;$$->type="Int";}

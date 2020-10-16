@@ -8,9 +8,9 @@
             "name": "g++ - Build and debug active file",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${fileDirname}/parser",
+            "program": "${workspaceFolder}/parser",
             "args": [
-                "test.txt"
+                "./test/test.swiftl"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

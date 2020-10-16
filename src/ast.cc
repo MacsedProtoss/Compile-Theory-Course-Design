@@ -3,7 +3,7 @@
 
 Operation::Operation() : data(0), kind(0), type(0), level(0) {}
 CodeNode::CodeNode() : op(0), next(nullptr), prior(nullptr) {}
-ASTNode::ASTNode() : kind(0), ptr(4, nullptr), idx(0), type(nullptr), pos(0), num(0), code(nullptr) {}
+ASTNode::ASTNode() : kind(0), ptr(4, nullptr), idx(0), type(""), pos(0), num(0), code(nullptr) {}
 Symbol::Symbol() : level(0), type(0), paramnum(0), flag(0), idx(0) {}
 
 extern vector<Symbol> symbol_table;
