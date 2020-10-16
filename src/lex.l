@@ -57,7 +57,7 @@ typedef union {
 [,]											{return COMMA;}
 
 ['][A-Za-z0-9_][']							{yylval.charValue=yytext[1];  return CHAR;}
-[+-]?0.[0-9]*|[+-]?[1-9][0-9]*.[0-9]*       {yylval.floatValue=atof(yytext); return FLOAT;}
+[+-]?0[.][0-9]*|[+-]?[1-9][0-9]*[.][0-9]*       {yylval.floatValue=atof(yytext); return FLOAT;}
 0|[+-]?[1-9][0-9]*                          {yylval.intValue=atoi(yytext);	return INTEGER;}
 [_a-zA-Z][_a-zA-Z0-9]*                      {strcpy(yylval.idValue,yytext);	return ID;}
 

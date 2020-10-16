@@ -74,8 +74,8 @@ STATEMENT:
       | BREAK EOL {$$=make_node(BREAK,yylineno);}
       | CONTINUE EOL {$$=make_node(CONTINUE,yylineno);}
       | RETURN Exp EOL   {$$=make_node(RETURN,yylineno,{$2});}
-      | Exp EOL {$$=make_node(Exp_STATMENT,yylineno,{$1});}
       | FUNCCALL EOL {$$=$1;}
+      | Exp EOL {$$=make_node(Exp_STATMENT,yylineno,{$1});}
       | DEFINE EOL{$$=$1;}
       | DEFINEASSIGN EOL{$$=$1;}
       | EOL {$$=nullptr;}
@@ -133,6 +133,39 @@ Exp:
       | Exp MINUS Exp   {$$=make_node(MINUS,yylineno,{$1,$3});}
       | Exp MULTI Exp   {$$=make_node(MULTI,yylineno,{$1,$3});}
       | Exp DIVID Exp   {$$=make_node(DIVID,yylineno,{$1,$3});}
+
+      
+      | FUNCCALL ASSIGN Exp  {$$=make_node(ASSIGN,yylineno,{$1,$3});}
+      | FUNCCALL AND Exp     {$$=make_node(AND,yylineno,{$1,$3});}
+      | FUNCCALL OR Exp      {$$=make_node(OR,yylineno,{$1,$3});}
+      | FUNCCALL COMPARE Exp {$$=make_node(COMPARE,yylineno,{$1,$3});$$->data = $2;}
+      | FUNCCALL PLUS Exp    {$$=make_node(PLUS,yylineno,{$1,$3});}
+      | FUNCCALL MINUS Exp   {$$=make_node(MINUS,yylineno,{$1,$3});}
+      | FUNCCALL MULTI Exp   {$$=make_node(MULTI,yylineno,{$1,$3});}
+      | FUNCCALL DIVID Exp   {$$=make_node(DIVID,yylineno,{$1,$3});}
+      
+      | Exp ASSIGN FUNCCALL  {$$=make_node(ASSIGN,yylineno,{$1,$3});}
+      | Exp AND FUNCCALL     {$$=make_node(AND,yylineno,{$1,$3});}
+      | Exp OR FUNCCALL      {$$=make_node(OR,yylineno,{$1,$3});}
+      | Exp COMPARE FUNCCALL {$$=make_node(COMPARE,yylineno,{$1,$3});$$->data = $2;}
+      | Exp PLUS FUNCCALL    {$$=make_node(PLUS,yylineno,{$1,$3});}
+      | Exp MINUS FUNCCALL   {$$=make_node(MINUS,yylineno,{$1,$3});}
+      | Exp MULTI FUNCCALL   {$$=make_node(MULTI,yylineno,{$1,$3});}
+      | Exp DIVID FUNCCALL   {$$=make_node(DIVID,yylineno,{$1,$3});}
+
+      | FUNCCALL ASSIGN FUNCCALL  {$$=make_node(ASSIGN,yylineno,{$1,$3});}
+      | FUNCCALL AND FUNCCALL     {$$=make_node(AND,yylineno,{$1,$3});}
+      | FUNCCALL OR FUNCCALL      {$$=make_node(OR,yylineno,{$1,$3});}
+      | FUNCCALL COMPARE FUNCCALL {$$=make_node(COMPARE,yylineno,{$1,$3});$$->data = $2;}
+      | FUNCCALL PLUS FUNCCALL    {$$=make_node(PLUS,yylineno,{$1,$3});}
+      | FUNCCALL MINUS FUNCCALL   {$$=make_node(MINUS,yylineno,{$1,$3});}
+      | FUNCCALL MULTI FUNCCALL   {$$=make_node(MULTI,yylineno,{$1,$3});}
+      | FUNCCALL DIVID FUNCCALL   {$$=make_node(DIVID,yylineno,{$1,$3});}
+      | NOT FUNCCALL              {$$=make_node(NOT,yylineno,{$2});}
+      | INCREASE FUNCCALL    {$$=make_node(INCREASE,yylineno,{$2});}
+      | FUNCCALL INCREASE    {$$=make_node(INCREASE,yylineno,{$1});}
+      | DECREASE FUNCCALL    {$$=make_node(DECREASE,yylineno,{$2});}
+      | FUNCCALL DECREASE    {$$=make_node(DECREASE,yylineno,{$1});}
 
       | LBR Exp RBR     {$$=$2;}
 
