@@ -22,7 +22,7 @@ int yylex();
         class ASTNode *ptr;
 };
 
-%type  <ptr> Exp STATEMENT WHOLESTATEMENT STATEMENTLIST Args PARAMETERS PARAMETER VARLIST VAR Specifier DEFINE DEFINEASSIGN DEFINELIST program ExternalDefineList ExternalDefine FUNCDEFINE FUNCCALL
+%type  <ptr> Exp STATEMENT WHOLESTATEMENT STATEMENTLIST Args PARAMETERS PARAMETER VARLIST VAR Specifier DEFINE DEFINEASSIGN  program ExternalDefineList ExternalDefine FUNCDEFINE FUNCCALL 
 
 %token <intValue> INTEGER
 %token <idValue> ID TYPE
@@ -76,11 +76,12 @@ STATEMENT:
       | RETURN Exp EOL   {$$=make_node(RETURN,yylineno,{$2});}
       | Exp EOL {$$=make_node(Exp_STATMENT,yylineno,{$1});}
       | FUNCCALL EOL {$$=$1;}
+      | DEFINE EOL{$$=$1;}
+      | DEFINEASSIGN EOL{$$=$1;}
       | EOL {$$=nullptr;}
       ;
-    
 WHOLESTATEMENT:
-      LCBR DEFINELIST STATEMENTLIST RCBR {$$=make_node(WHOLE_STATEMENT,yylineno,{$2,$3});}
+      LCBR STATEMENTLIST RCBR {$$=make_node(WHOLE_STATEMENT,yylineno,{$2});}
       ;
 STATEMENTLIST:
         STATEMENT {$$=make_node(STATEMENT_LIST,yylineno,{$1});}
@@ -112,12 +113,7 @@ DEFINE:
 DEFINEASSIGN:
         DEFINE ASSIGN Exp {$$=make_node(ASSIGN,yylineno,{$1,$3});}
         ;
-DEFINELIST:
-        {$$=NULL;}
-      | DEFINE {$$=make_node(DEFINE_LIST,yylineno,{$1});}
-      | DEFINEASSIGN {$$=make_node(DEFINE_LIST,yylineno,{$1});}
-      | error EOL {$$=NULL;}
-        ;
+
 FUNCDEFINE:
         FUNC VAR LBR RBR {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2});}
       | FUNC VAR LBR PARAMETERS RBR {$$=make_node(FUNC_ANNOUNCE,yylineno,{$2,$4});}

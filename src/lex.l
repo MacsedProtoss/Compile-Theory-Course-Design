@@ -61,7 +61,7 @@ typedef union {
 0|[+-]?[1-9][0-9]*                          {yylval.intValue=atoi(yytext);	return INTEGER;}
 [_a-zA-Z][_a-zA-Z0-9]*                      {strcpy(yylval.idValue,yytext);	return ID;}
 
-[\n;]	                                	{return EOL;}
+[\n;]	                                	{if(yytext[0]=='\n'){yylineno++;yycolumn=1;};return EOL;}
 [ \r\t]     								{}
 
 .                                           {printf("Error type A :Mysterious character \"%s\"\n\t at Line %d\n", yytext, yylineno);}

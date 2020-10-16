@@ -362,16 +362,16 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[95] =
     {   0,
-        0,    0,   38,   36,   35,   34,   21,   36,   36,   28,
-       29,   24,   22,   33,   23,   25,   16,   16,    2,   34,
-       18,   32,   18,   17,   17,   17,   17,   17,   17,   17,
-       17,   17,   17,   17,   17,   30,   36,   31,   18,   19,
-        0,   26,    0,   16,   27,   13,   15,   15,   15,   17,
-       17,   17,   17,   17,   17,   17,   17,    7,   17,   17,
-       17,   20,   14,   15,   15,   15,   17,   17,    4,   17,
-       17,   17,   17,   17,    1,   17,    3,   17,   17,   17,
-        8,   12,   17,   17,    5,   10,   17,   17,    9,   17,
-        6,   17,   11,    0
+        0,    0,   38,   36,   35,   34,   17,   36,   36,   24,
+       25,   20,   18,   29,   19,   21,   32,   32,    2,   34,
+       14,   28,   14,   33,   33,   33,   33,   33,   33,   33,
+       33,   33,   33,   33,   33,   26,   36,   27,   14,   15,
+        0,   22,    0,   32,   23,   13,   31,   31,   31,   33,
+       33,   33,   33,   33,   33,   33,   33,    7,   33,   33,
+       33,   16,   30,   31,   31,   31,   33,   33,    4,   33,
+       33,   33,   33,   33,    1,   33,    3,   33,   33,   33,
+        8,   12,   33,   33,    5,   10,   33,   33,    9,   33,
+        6,   33,   11,    0
 
     } ;
 
@@ -867,108 +867,108 @@ YY_RULE_SETUP
 case 14:
 YY_RULE_SETUP
 #line 36 "lex.l"
-{yylval.charValue=yytext[1];  return CHAR;}
+{strcpy(yylval.cmpCommand,yytext);	return COMPARE;}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 37 "lex.l"
-{yylval.floatValue=atof(yytext); return FLOAT;}
+#line 38 "lex.l"
+{return AND;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 38 "lex.l"
-{yylval.intValue=atoi(yytext);	return INTEGER;}
+#line 39 "lex.l"
+{return OR;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 39 "lex.l"
-{strcpy(yylval.idValue,yytext);	return ID;}
+#line 40 "lex.l"
+{return NOT;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 41 "lex.l"
-{strcpy(yylval.cmpCommand,yytext);	return COMPARE;}
+#line 42 "lex.l"
+{return PLUS;}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 43 "lex.l"
-{return AND;}
+{return MINUS;}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
 #line 44 "lex.l"
-{return OR;}
+{return MULTI;}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
 #line 45 "lex.l"
-{return NOT;}
+{return DIVID;}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
 #line 47 "lex.l"
-{return PLUS;}
+{return INCREASE;}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
 #line 48 "lex.l"
-{return MINUS;}
+{return DECREASE;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 49 "lex.l"
-{return MULTI;}
+#line 50 "lex.l"
+{return LBR;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 50 "lex.l"
-{return DIVID;}
+#line 51 "lex.l"
+{return RBR;}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
 #line 52 "lex.l"
-{return INCREASE;}
+{return LCBR;}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
 #line 53 "lex.l"
-{return DECREASE;}
+{return RCBR;}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
 #line 55 "lex.l"
-{return LBR;}
+{return ASSIGN;}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 56 "lex.l"
-{return RBR;}
+#line 57 "lex.l"
+{return COMMA;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 57 "lex.l"
-{return LCBR;}
+#line 59 "lex.l"
+{yylval.charValue=yytext[1];  return CHAR;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 58 "lex.l"
-{return RCBR;}
+#line 60 "lex.l"
+{yylval.floatValue=atof(yytext); return FLOAT;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 60 "lex.l"
-{return ASSIGN;}
+#line 61 "lex.l"
+{yylval.intValue=atoi(yytext);	return INTEGER;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
 #line 62 "lex.l"
-{return COMMA;}
+{strcpy(yylval.idValue,yytext);	return ID;}
 	YY_BREAK
 case 34:
 /* rule 34 can match eol */
 YY_RULE_SETUP
 #line 64 "lex.l"
-{return EOL;}
+{if(yytext[0]=='\n'){yylineno++;yycolumn=1;};return EOL;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP

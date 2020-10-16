@@ -31,13 +31,6 @@ ASTNode *make_node(int kind, int pos, vector<ASTNode *> nodes){
     return node;
 }
 
-/*
-%type  <ptr> Exp STATEMENT WHOLESTATEMENT STATEMENTLIST Args PARAMETERS PARAMETER VARLIST VAR Specifier DEFINE DEFINEASSIGN DEFINELIST
-
-%token  IF ELSE WHILE  FUNC FUNC_RETURN_TYPE COMMA EOL
-%token FUNC_CALL FUNC_ANNOUNCE IF_THEN IF_THEN_ELSE Exp_STATMENT WHOLE_STATEMENT STATEMENT_LIST ARGS FUNC_PARAMETERS FUNC_PARAMETER 
-%token VAR_LIST VAR_DEFINE DEFINE_ASSIGN DEFINE_LIST
-*/
 
 void print_sub_ast_nodes(ASTNode *node, int indent,int count){
     for (int i = 0;i < 4 && i<count;i++){
@@ -150,7 +143,13 @@ void print_ast_node(ASTNode *node, int indent){
             break;
         case DEFINE_LIST:
             printf("%*c%s: \n", indent,' ', "DEFINE_LIST");
-            print_sub_ast_nodes(node,indent,1);
+            while (temp)
+            {
+                printf("%*cArg[%d]:\n",indent + 2,' ',index);
+                print_sub_ast_nodes(temp,indent,1);
+                temp = temp->ptr[1];
+                index++;
+            }
             break;
         case VAR_DEFINE:
             printf("%*c%s: \n", indent,' ', "VAR_DEFINE");

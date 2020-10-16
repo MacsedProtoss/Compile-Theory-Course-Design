@@ -1,5 +1,5 @@
 
-func add(Int a, Int b) -> Int {
+func add(a : Int, b : Int) -> Int {
     return a + b;
 }
 
