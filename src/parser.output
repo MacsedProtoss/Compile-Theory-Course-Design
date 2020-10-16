@@ -1,0 +1,1613 @@
+Terminals unused in grammar
+
+    FUNC_CALL
+    FUNC_ANNOUNCE
+    IF_THEN
+    IF_THEN_ELSE
+    Exp_STATMENT
+    WHOLE_STATEMENT
+    STATEMENT_LIST
+    ARGS
+    FUNC_PARAMETERS
+    FUNC_PARAMETER
+    VAR_LIST
+    VAR_DEFINE
+    DEFINE_ASSIGN
+    DEFINE_LIST
+    EXT_DEF_LIST
+    EXT_DEF
+    FUNCTION
+
+
+State 36 conflicts: 1 shift/reduce
+
+
+Grammar
+
+    0 $accept: program $end
+
+    1 program: ExternalDefineList
+
+    2 ExternalDefineList: %empty
+    3                   | ExternalDefine ExternalDefineList
+
+    4 ExternalDefine: DEFINE
+    5               | FUNCDEFINE WHOLESTATEMENT
+    6               | error EOL
+    7               | EOL
+
+    8 STATEMENT: IF LBR Exp RBR WHOLESTATEMENT
+    9          | IF LBR Exp RBR WHOLESTATEMENT ELSE WHOLESTATEMENT
+   10          | WHILE LBR Exp RBR WHOLESTATEMENT
+   11          | BREAK EOL
+   12          | CONTINUE EOL
+   13          | RETURN Exp EOL
+   14          | Exp EOL
+   15          | EOL
+
+   16 WHOLESTATEMENT: %empty
+   17               | LCBR DEFINELIST STATEMENTLIST RCBR
+
+   18 STATEMENTLIST: STATEMENT
+   19              | STATEMENT STATEMENTLIST
+
+   20 PARAMETERS: PARAMETER
+   21           | PARAMETER COMMA PARAMETERS
+
+   22 PARAMETER: VAR ANNOUNCE Specifier
+
+   23 VARLIST: VAR
+   24        | VAR COMMA VARLIST
+
+   25 VAR: ID
+
+   26 Specifier: TYPE
+
+   27 DEFINE: NEW VARLIST ANNOUNCE Specifier
+
+   28 DEFINEASSIGN: DEFINE ASSIGN Exp
+
+   29 DEFINELIST: %empty
+   30           | DEFINE
+   31           | DEFINEASSIGN
+   32           | error EOL
+
+   33 FUNCDEFINE: FUNC VAR LBR RBR
+   34           | FUNC VAR LBR PARAMETERS RBR
+   35           | FUNC VAR LBR RBR FUNC_RETURN_TYPE Specifier
+   36           | FUNC VAR LBR PARAMETERS RBR FUNC_RETURN_TYPE Specifier
+
+   37 Exp: Exp ASSIGN Exp
+   38    | Exp AND Exp
+   39    | Exp OR Exp
+   40    | Exp COMPARE Exp
+   41    | Exp PLUS Exp
+   42    | Exp MINUS Exp
+   43    | Exp MULTI Exp
+   44    | Exp DIVID Exp
+   45    | LBR Exp RBR
+   46    | NOT Exp
+   47    | INCREASE Exp
+   48    | Exp INCREASE
+   49    | DECREASE Exp
+   50    | Exp DECREASE
+   51    | ID LBR Args RBR
+   52    | ID LBR RBR
+   53    | ID
+   54    | INTEGER
+   55    | FLOAT
+   56    | CHAR
+
+   57 Args: Exp COMMA Args
+   58     | Exp
+
+
+Terminals, with rules where they appear
+
+    $end (0) 0
+    error (256) 6 32
+    INTEGER <intValue> (258) 54
+    ID <idValue> (259) 25 51 52 53
+    TYPE <idValue> (260) 26
+    FLOAT <floatValue> (261) 55
+    CHAR <charValue> (262) 56
+    COMPARE <cmpCommand> (263) 40
+    NEW (264) 27
+    ANNOUNCE (265) 22 27
+    ASSIGN (266) 28 37
+    LBR (267) 8 9 10 33 34 35 36 45 51 52
+    RBR (268) 8 9 10 33 34 35 36 45 51 52
+    LCBR (269) 17
+    RCBR (270) 17
+    RETURN (271) 13
+    IF (272) 8 9
+    ELSE (273) 9
+    WHILE (274) 10
+    BREAK (275) 11
+    CONTINUE (276) 12
+    FUNC (277) 33 34 35 36
+    FUNC_RETURN_TYPE (278) 35 36
+    COMMA (279) 21 24 57
+    EOL (280) 6 7 11 12 13 14 15 32
+    AND (281) 38
+    OR (282) 39
+    NOT (283) 46
+    PLUS (284) 41
+    MINUS (285) 42
+    MULTI (286) 43
+    DIVID (287) 44
+    INCREASE (288) 47 48
+    DECREASE (289) 49 50
+    FUNC_CALL (290)
+    FUNC_ANNOUNCE (291)
+    IF_THEN (292)
+    IF_THEN_ELSE (293)
+    Exp_STATMENT (294)
+    WHOLE_STATEMENT (295)
+    STATEMENT_LIST (296)
+    ARGS (297)
+    FUNC_PARAMETERS (298)
+    FUNC_PARAMETER (299)
+    VAR_LIST (300)
+    VAR_DEFINE (301)
+    DEFINE_ASSIGN (302)
+    DEFINE_LIST (303)
+    EXT_DEF_LIST (304)
+    EXT_DEF (305)
+    FUNCTION (306)
+    LOWER_THEN_ELSE (307)
+
+
+Nonterminals, with rules where they appear
+
+    $accept (53)
+        on left: 0
+    program <ptr> (54)
+        on left: 1
+        on right: 0
+    ExternalDefineList <ptr> (55)
+        on left: 2 3
+        on right: 1 3
+    ExternalDefine <ptr> (56)
+        on left: 4 5 6 7
+        on right: 3
+    STATEMENT <ptr> (57)
+        on left: 8 9 10 11 12 13 14 15
+        on right: 18 19
+    WHOLESTATEMENT <ptr> (58)
+        on left: 16 17
+        on right: 5 8 9 10
+    STATEMENTLIST <ptr> (59)
+        on left: 18 19
+        on right: 17 19
+    PARAMETERS <ptr> (60)
+        on left: 20 21
+        on right: 21 34 36
+    PARAMETER <ptr> (61)
+        on left: 22
+        on right: 20 21
+    VARLIST <ptr> (62)
+        on left: 23 24
+        on right: 24 27
+    VAR <ptr> (63)
+        on left: 25
+        on right: 22 23 24 33 34 35 36
+    Specifier <ptr> (64)
+        on left: 26
+        on right: 22 27 35 36
+    DEFINE <ptr> (65)
+        on left: 27
+        on right: 4 28 30
+    DEFINEASSIGN <ptr> (66)
+        on left: 28
+        on right: 31
+    DEFINELIST <ptr> (67)
+        on left: 29 30 31 32
+        on right: 17
+    FUNCDEFINE <ptr> (68)
+        on left: 33 34 35 36
+        on right: 5
+    Exp <ptr> (69)
+        on left: 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56
+        on right: 8 9 10 13 14 28 37 38 39 40 41 42 43 44 45 46 47 48 49 50 57 58
+    Args <ptr> (70)
+        on left: 57 58
+        on right: 51 57
+
+
+State 0
+
+    0 $accept: . program $end
+
+    error  shift, and go to state 1
+    NEW    shift, and go to state 2
+    FUNC   shift, and go to state 3
+    EOL    shift, and go to state 4
+
+    $end  reduce using rule 2 (ExternalDefineList)
+
+    program             go to state 5
+    ExternalDefineList  go to state 6
+    ExternalDefine      go to state 7
+    DEFINE              go to state 8
+    FUNCDEFINE          go to state 9
+
+
+State 1
+
+    6 ExternalDefine: error . EOL
+
+    EOL  shift, and go to state 10
+
+
+State 2
+
+   27 DEFINE: NEW . VARLIST ANNOUNCE Specifier
+
+    ID  shift, and go to state 11
+
+    VARLIST  go to state 12
+    VAR      go to state 13
+
+
+State 3
+
+   33 FUNCDEFINE: FUNC . VAR LBR RBR
+   34           | FUNC . VAR LBR PARAMETERS RBR
+   35           | FUNC . VAR LBR RBR FUNC_RETURN_TYPE Specifier
+   36           | FUNC . VAR LBR PARAMETERS RBR FUNC_RETURN_TYPE Specifier
+
+    ID  shift, and go to state 11
+
+    VAR  go to state 14
+
+
+State 4
+
+    7 ExternalDefine: EOL .
+
+    $default  reduce using rule 7 (ExternalDefine)
+
+
+State 5
+
+    0 $accept: program . $end
+
+    $end  shift, and go to state 15
+
+
+State 6
+
+    1 program: ExternalDefineList .
+
+    $default  reduce using rule 1 (program)
+
+
+State 7
+
+    3 ExternalDefineList: ExternalDefine . ExternalDefineList
+
+    error  shift, and go to state 1
+    NEW    shift, and go to state 2
+    FUNC   shift, and go to state 3
+    EOL    shift, and go to state 4
+
+    $end  reduce using rule 2 (ExternalDefineList)
+
+    ExternalDefineList  go to state 16
+    ExternalDefine      go to state 7
+    DEFINE              go to state 8
+    FUNCDEFINE          go to state 9
+
+
+State 8
+
+    4 ExternalDefine: DEFINE .
+
+    $default  reduce using rule 4 (ExternalDefine)
+
+
+State 9
+
+    5 ExternalDefine: FUNCDEFINE . WHOLESTATEMENT
+
+    LCBR  shift, and go to state 17
+
+    $default  reduce using rule 16 (WHOLESTATEMENT)
+
+    WHOLESTATEMENT  go to state 18
+
+
+State 10
+
+    6 ExternalDefine: error EOL .
+
+    $default  reduce using rule 6 (ExternalDefine)
+
+
+State 11
+
+   25 VAR: ID .
+
+    $default  reduce using rule 25 (VAR)
+
+
+State 12
+
+   27 DEFINE: NEW VARLIST . ANNOUNCE Specifier
+
+    ANNOUNCE  shift, and go to state 19
+
+
+State 13
+
+   23 VARLIST: VAR .
+   24        | VAR . COMMA VARLIST
+
+    COMMA  shift, and go to state 20
+
+    $default  reduce using rule 23 (VARLIST)
+
+
+State 14
+
+   33 FUNCDEFINE: FUNC VAR . LBR RBR
+   34           | FUNC VAR . LBR PARAMETERS RBR
+   35           | FUNC VAR . LBR RBR FUNC_RETURN_TYPE Specifier
+   36           | FUNC VAR . LBR PARAMETERS RBR FUNC_RETURN_TYPE Specifier
+
+    LBR  shift, and go to state 21
+
+
+State 15
+
+    0 $accept: program $end .
+
+    $default  accept
+
+
+State 16
+
+    3 ExternalDefineList: ExternalDefine ExternalDefineList .
+
+    $default  reduce using rule 3 (ExternalDefineList)
+
+
+State 17
+
+   17 WHOLESTATEMENT: LCBR . DEFINELIST STATEMENTLIST RCBR
+
+    error  shift, and go to state 22
+    NEW    shift, and go to state 2
+
+    INTEGER   reduce using rule 29 (DEFINELIST)
+    ID        reduce using rule 29 (DEFINELIST)
+    FLOAT     reduce using rule 29 (DEFINELIST)
+    CHAR      reduce using rule 29 (DEFINELIST)
+    LBR       reduce using rule 29 (DEFINELIST)
+    RETURN    reduce using rule 29 (DEFINELIST)
+    IF        reduce using rule 29 (DEFINELIST)
+    WHILE     reduce using rule 29 (DEFINELIST)
+    BREAK     reduce using rule 29 (DEFINELIST)
+    CONTINUE  reduce using rule 29 (DEFINELIST)
+    EOL       reduce using rule 29 (DEFINELIST)
+    NOT       reduce using rule 29 (DEFINELIST)
+    INCREASE  reduce using rule 29 (DEFINELIST)
+    DECREASE  reduce using rule 29 (DEFINELIST)
+
+    DEFINE        go to state 23
+    DEFINEASSIGN  go to state 24
+    DEFINELIST    go to state 25
+
+
+State 18
+
+    5 ExternalDefine: FUNCDEFINE WHOLESTATEMENT .
+
+    $default  reduce using rule 5 (ExternalDefine)
+
+
+State 19
+
+   27 DEFINE: NEW VARLIST ANNOUNCE . Specifier
+
+    TYPE  shift, and go to state 26
+
+    Specifier  go to state 27
+
+
+State 20
+
+   24 VARLIST: VAR COMMA . VARLIST
+
+    ID  shift, and go to state 11
+
+    VARLIST  go to state 28
+    VAR      go to state 13
+
+
+State 21
+
+   33 FUNCDEFINE: FUNC VAR LBR . RBR
+   34           | FUNC VAR LBR . PARAMETERS RBR
+   35           | FUNC VAR LBR . RBR FUNC_RETURN_TYPE Specifier
+   36           | FUNC VAR LBR . PARAMETERS RBR FUNC_RETURN_TYPE Specifier
+
+    ID   shift, and go to state 11
+    RBR  shift, and go to state 29
+
+    PARAMETERS  go to state 30
+    PARAMETER   go to state 31
+    VAR         go to state 32
+
+
+State 22
+
+   32 DEFINELIST: error . EOL
+
+    EOL  shift, and go to state 33
+
+
+State 23
+
+   28 DEFINEASSIGN: DEFINE . ASSIGN Exp
+   30 DEFINELIST: DEFINE .
+
+    ASSIGN  shift, and go to state 34
+
+    $default  reduce using rule 30 (DEFINELIST)
+
+
+State 24
+
+   31 DEFINELIST: DEFINEASSIGN .
+
+    $default  reduce using rule 31 (DEFINELIST)
+
+
+State 25
+
+   17 WHOLESTATEMENT: LCBR DEFINELIST . STATEMENTLIST RCBR
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    RETURN    shift, and go to state 40
+    IF        shift, and go to state 41
+    WHILE     shift, and go to state 42
+    BREAK     shift, and go to state 43
+    CONTINUE  shift, and go to state 44
+    EOL       shift, and go to state 45
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    STATEMENT      go to state 49
+    STATEMENTLIST  go to state 50
+    Exp            go to state 51
+
+
+State 26
+
+   26 Specifier: TYPE .
+
+    $default  reduce using rule 26 (Specifier)
+
+
+State 27
+
+   27 DEFINE: NEW VARLIST ANNOUNCE Specifier .
+
+    $default  reduce using rule 27 (DEFINE)
+
+
+State 28
+
+   24 VARLIST: VAR COMMA VARLIST .
+
+    $default  reduce using rule 24 (VARLIST)
+
+
+State 29
+
+   33 FUNCDEFINE: FUNC VAR LBR RBR .
+   35           | FUNC VAR LBR RBR . FUNC_RETURN_TYPE Specifier
+
+    FUNC_RETURN_TYPE  shift, and go to state 52
+
+    $default  reduce using rule 33 (FUNCDEFINE)
+
+
+State 30
+
+   34 FUNCDEFINE: FUNC VAR LBR PARAMETERS . RBR
+   36           | FUNC VAR LBR PARAMETERS . RBR FUNC_RETURN_TYPE Specifier
+
+    RBR  shift, and go to state 53
+
+
+State 31
+
+   20 PARAMETERS: PARAMETER .
+   21           | PARAMETER . COMMA PARAMETERS
+
+    COMMA  shift, and go to state 54
+
+    $default  reduce using rule 20 (PARAMETERS)
+
+
+State 32
+
+   22 PARAMETER: VAR . ANNOUNCE Specifier
+
+    ANNOUNCE  shift, and go to state 55
+
+
+State 33
+
+   32 DEFINELIST: error EOL .
+
+    $default  reduce using rule 32 (DEFINELIST)
+
+
+State 34
+
+   28 DEFINEASSIGN: DEFINE ASSIGN . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 56
+
+
+State 35
+
+   54 Exp: INTEGER .
+
+    $default  reduce using rule 54 (Exp)
+
+
+State 36
+
+   51 Exp: ID . LBR Args RBR
+   52    | ID . LBR RBR
+   53    | ID .
+
+    LBR  shift, and go to state 57
+
+    LBR       [reduce using rule 53 (Exp)]
+    $default  reduce using rule 53 (Exp)
+
+
+State 37
+
+   55 Exp: FLOAT .
+
+    $default  reduce using rule 55 (Exp)
+
+
+State 38
+
+   56 Exp: CHAR .
+
+    $default  reduce using rule 56 (Exp)
+
+
+State 39
+
+   45 Exp: LBR . Exp RBR
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 58
+
+
+State 40
+
+   13 STATEMENT: RETURN . Exp EOL
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 59
+
+
+State 41
+
+    8 STATEMENT: IF . LBR Exp RBR WHOLESTATEMENT
+    9          | IF . LBR Exp RBR WHOLESTATEMENT ELSE WHOLESTATEMENT
+
+    LBR  shift, and go to state 60
+
+
+State 42
+
+   10 STATEMENT: WHILE . LBR Exp RBR WHOLESTATEMENT
+
+    LBR  shift, and go to state 61
+
+
+State 43
+
+   11 STATEMENT: BREAK . EOL
+
+    EOL  shift, and go to state 62
+
+
+State 44
+
+   12 STATEMENT: CONTINUE . EOL
+
+    EOL  shift, and go to state 63
+
+
+State 45
+
+   15 STATEMENT: EOL .
+
+    $default  reduce using rule 15 (STATEMENT)
+
+
+State 46
+
+   46 Exp: NOT . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 64
+
+
+State 47
+
+   47 Exp: INCREASE . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 65
+
+
+State 48
+
+   49 Exp: DECREASE . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 66
+
+
+State 49
+
+   18 STATEMENTLIST: STATEMENT .
+   19              | STATEMENT . STATEMENTLIST
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    RETURN    shift, and go to state 40
+    IF        shift, and go to state 41
+    WHILE     shift, and go to state 42
+    BREAK     shift, and go to state 43
+    CONTINUE  shift, and go to state 44
+    EOL       shift, and go to state 45
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    $default  reduce using rule 18 (STATEMENTLIST)
+
+    STATEMENT      go to state 49
+    STATEMENTLIST  go to state 67
+    Exp            go to state 51
+
+
+State 50
+
+   17 WHOLESTATEMENT: LCBR DEFINELIST STATEMENTLIST . RCBR
+
+    RCBR  shift, and go to state 68
+
+
+State 51
+
+   14 STATEMENT: Exp . EOL
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    COMPARE   shift, and go to state 69
+    ASSIGN    shift, and go to state 70
+    EOL       shift, and go to state 71
+    AND       shift, and go to state 72
+    OR        shift, and go to state 73
+    PLUS      shift, and go to state 74
+    MINUS     shift, and go to state 75
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+
+State 52
+
+   35 FUNCDEFINE: FUNC VAR LBR RBR FUNC_RETURN_TYPE . Specifier
+
+    TYPE  shift, and go to state 26
+
+    Specifier  go to state 80
+
+
+State 53
+
+   34 FUNCDEFINE: FUNC VAR LBR PARAMETERS RBR .
+   36           | FUNC VAR LBR PARAMETERS RBR . FUNC_RETURN_TYPE Specifier
+
+    FUNC_RETURN_TYPE  shift, and go to state 81
+
+    $default  reduce using rule 34 (FUNCDEFINE)
+
+
+State 54
+
+   21 PARAMETERS: PARAMETER COMMA . PARAMETERS
+
+    ID  shift, and go to state 11
+
+    PARAMETERS  go to state 82
+    PARAMETER   go to state 31
+    VAR         go to state 32
+
+
+State 55
+
+   22 PARAMETER: VAR ANNOUNCE . Specifier
+
+    TYPE  shift, and go to state 26
+
+    Specifier  go to state 83
+
+
+State 56
+
+   28 DEFINEASSIGN: DEFINE ASSIGN Exp .
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    COMPARE   shift, and go to state 69
+    ASSIGN    shift, and go to state 70
+    AND       shift, and go to state 72
+    OR        shift, and go to state 73
+    PLUS      shift, and go to state 74
+    MINUS     shift, and go to state 75
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 28 (DEFINEASSIGN)
+
+
+State 57
+
+   51 Exp: ID LBR . Args RBR
+   52    | ID LBR . RBR
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    RBR       shift, and go to state 84
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp   go to state 85
+    Args  go to state 86
+
+
+State 58
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   45    | LBR Exp . RBR
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    COMPARE   shift, and go to state 69
+    ASSIGN    shift, and go to state 70
+    RBR       shift, and go to state 87
+    AND       shift, and go to state 72
+    OR        shift, and go to state 73
+    PLUS      shift, and go to state 74
+    MINUS     shift, and go to state 75
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+
+State 59
+
+   13 STATEMENT: RETURN Exp . EOL
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    COMPARE   shift, and go to state 69
+    ASSIGN    shift, and go to state 70
+    EOL       shift, and go to state 88
+    AND       shift, and go to state 72
+    OR        shift, and go to state 73
+    PLUS      shift, and go to state 74
+    MINUS     shift, and go to state 75
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+
+State 60
+
+    8 STATEMENT: IF LBR . Exp RBR WHOLESTATEMENT
+    9          | IF LBR . Exp RBR WHOLESTATEMENT ELSE WHOLESTATEMENT
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 89
+
+
+State 61
+
+   10 STATEMENT: WHILE LBR . Exp RBR WHOLESTATEMENT
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 90
+
+
+State 62
+
+   11 STATEMENT: BREAK EOL .
+
+    $default  reduce using rule 11 (STATEMENT)
+
+
+State 63
+
+   12 STATEMENT: CONTINUE EOL .
+
+    $default  reduce using rule 12 (STATEMENT)
+
+
+State 64
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   46    | NOT Exp .
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 46 (Exp)
+
+
+State 65
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   47    | INCREASE Exp .
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 47 (Exp)
+
+
+State 66
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   49    | DECREASE Exp .
+   50    | Exp . DECREASE
+
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 49 (Exp)
+
+
+State 67
+
+   19 STATEMENTLIST: STATEMENT STATEMENTLIST .
+
+    $default  reduce using rule 19 (STATEMENTLIST)
+
+
+State 68
+
+   17 WHOLESTATEMENT: LCBR DEFINELIST STATEMENTLIST RCBR .
+
+    $default  reduce using rule 17 (WHOLESTATEMENT)
+
+
+State 69
+
+   40 Exp: Exp COMPARE . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 91
+
+
+State 70
+
+   37 Exp: Exp ASSIGN . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 92
+
+
+State 71
+
+   14 STATEMENT: Exp EOL .
+
+    $default  reduce using rule 14 (STATEMENT)
+
+
+State 72
+
+   38 Exp: Exp AND . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 93
+
+
+State 73
+
+   39 Exp: Exp OR . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 94
+
+
+State 74
+
+   41 Exp: Exp PLUS . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 95
+
+
+State 75
+
+   42 Exp: Exp MINUS . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 96
+
+
+State 76
+
+   43 Exp: Exp MULTI . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 97
+
+
+State 77
+
+   44 Exp: Exp DIVID . Exp
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp  go to state 98
+
+
+State 78
+
+   48 Exp: Exp INCREASE .
+
+    $default  reduce using rule 48 (Exp)
+
+
+State 79
+
+   50 Exp: Exp DECREASE .
+
+    $default  reduce using rule 50 (Exp)
+
+
+State 80
+
+   35 FUNCDEFINE: FUNC VAR LBR RBR FUNC_RETURN_TYPE Specifier .
+
+    $default  reduce using rule 35 (FUNCDEFINE)
+
+
+State 81
+
+   36 FUNCDEFINE: FUNC VAR LBR PARAMETERS RBR FUNC_RETURN_TYPE . Specifier
+
+    TYPE  shift, and go to state 26
+
+    Specifier  go to state 99
+
+
+State 82
+
+   21 PARAMETERS: PARAMETER COMMA PARAMETERS .
+
+    $default  reduce using rule 21 (PARAMETERS)
+
+
+State 83
+
+   22 PARAMETER: VAR ANNOUNCE Specifier .
+
+    $default  reduce using rule 22 (PARAMETER)
+
+
+State 84
+
+   52 Exp: ID LBR RBR .
+
+    $default  reduce using rule 52 (Exp)
+
+
+State 85
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+   57 Args: Exp . COMMA Args
+   58     | Exp .
+
+    COMPARE   shift, and go to state 69
+    ASSIGN    shift, and go to state 70
+    COMMA     shift, and go to state 100
+    AND       shift, and go to state 72
+    OR        shift, and go to state 73
+    PLUS      shift, and go to state 74
+    MINUS     shift, and go to state 75
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 58 (Args)
+
+
+State 86
+
+   51 Exp: ID LBR Args . RBR
+
+    RBR  shift, and go to state 101
+
+
+State 87
+
+   45 Exp: LBR Exp RBR .
+
+    $default  reduce using rule 45 (Exp)
+
+
+State 88
+
+   13 STATEMENT: RETURN Exp EOL .
+
+    $default  reduce using rule 13 (STATEMENT)
+
+
+State 89
+
+    8 STATEMENT: IF LBR Exp . RBR WHOLESTATEMENT
+    9          | IF LBR Exp . RBR WHOLESTATEMENT ELSE WHOLESTATEMENT
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    COMPARE   shift, and go to state 69
+    ASSIGN    shift, and go to state 70
+    RBR       shift, and go to state 102
+    AND       shift, and go to state 72
+    OR        shift, and go to state 73
+    PLUS      shift, and go to state 74
+    MINUS     shift, and go to state 75
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+
+State 90
+
+   10 STATEMENT: WHILE LBR Exp . RBR WHOLESTATEMENT
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    COMPARE   shift, and go to state 69
+    ASSIGN    shift, and go to state 70
+    RBR       shift, and go to state 103
+    AND       shift, and go to state 72
+    OR        shift, and go to state 73
+    PLUS      shift, and go to state 74
+    MINUS     shift, and go to state 75
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+
+State 91
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   40    | Exp COMPARE Exp .
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    PLUS      shift, and go to state 74
+    MINUS     shift, and go to state 75
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 40 (Exp)
+
+
+State 92
+
+   37 Exp: Exp . ASSIGN Exp
+   37    | Exp ASSIGN Exp .
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    COMPARE   shift, and go to state 69
+    AND       shift, and go to state 72
+    OR        shift, and go to state 73
+    PLUS      shift, and go to state 74
+    MINUS     shift, and go to state 75
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 37 (Exp)
+
+
+State 93
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   38    | Exp AND Exp .
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    COMPARE   shift, and go to state 69
+    PLUS      shift, and go to state 74
+    MINUS     shift, and go to state 75
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 38 (Exp)
+
+
+State 94
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   39    | Exp OR Exp .
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    COMPARE   shift, and go to state 69
+    AND       shift, and go to state 72
+    PLUS      shift, and go to state 74
+    MINUS     shift, and go to state 75
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 39 (Exp)
+
+
+State 95
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   41    | Exp PLUS Exp .
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 41 (Exp)
+
+
+State 96
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   42    | Exp MINUS Exp .
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    MULTI     shift, and go to state 76
+    DIVID     shift, and go to state 77
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 42 (Exp)
+
+
+State 97
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   43    | Exp MULTI Exp .
+   44    | Exp . DIVID Exp
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 43 (Exp)
+
+
+State 98
+
+   37 Exp: Exp . ASSIGN Exp
+   38    | Exp . AND Exp
+   39    | Exp . OR Exp
+   40    | Exp . COMPARE Exp
+   41    | Exp . PLUS Exp
+   42    | Exp . MINUS Exp
+   43    | Exp . MULTI Exp
+   44    | Exp . DIVID Exp
+   44    | Exp DIVID Exp .
+   48    | Exp . INCREASE
+   50    | Exp . DECREASE
+
+    INCREASE  shift, and go to state 78
+    DECREASE  shift, and go to state 79
+
+    $default  reduce using rule 44 (Exp)
+
+
+State 99
+
+   36 FUNCDEFINE: FUNC VAR LBR PARAMETERS RBR FUNC_RETURN_TYPE Specifier .
+
+    $default  reduce using rule 36 (FUNCDEFINE)
+
+
+State 100
+
+   57 Args: Exp COMMA . Args
+
+    INTEGER   shift, and go to state 35
+    ID        shift, and go to state 36
+    FLOAT     shift, and go to state 37
+    CHAR      shift, and go to state 38
+    LBR       shift, and go to state 39
+    NOT       shift, and go to state 46
+    INCREASE  shift, and go to state 47
+    DECREASE  shift, and go to state 48
+
+    Exp   go to state 85
+    Args  go to state 104
+
+
+State 101
+
+   51 Exp: ID LBR Args RBR .
+
+    $default  reduce using rule 51 (Exp)
+
+
+State 102
+
+    8 STATEMENT: IF LBR Exp RBR . WHOLESTATEMENT
+    9          | IF LBR Exp RBR . WHOLESTATEMENT ELSE WHOLESTATEMENT
+
+    LCBR  shift, and go to state 17
+
+    $default  reduce using rule 16 (WHOLESTATEMENT)
+
+    WHOLESTATEMENT  go to state 105
+
+
+State 103
+
+   10 STATEMENT: WHILE LBR Exp RBR . WHOLESTATEMENT
+
+    LCBR  shift, and go to state 17
+
+    $default  reduce using rule 16 (WHOLESTATEMENT)
+
+    WHOLESTATEMENT  go to state 106
+
+
+State 104
+
+   57 Args: Exp COMMA Args .
+
+    $default  reduce using rule 57 (Args)
+
+
+State 105
+
+    8 STATEMENT: IF LBR Exp RBR WHOLESTATEMENT .
+    9          | IF LBR Exp RBR WHOLESTATEMENT . ELSE WHOLESTATEMENT
+
+    ELSE  shift, and go to state 107
+
+    $default  reduce using rule 8 (STATEMENT)
+
+
+State 106
+
+   10 STATEMENT: WHILE LBR Exp RBR WHOLESTATEMENT .
+
+    $default  reduce using rule 10 (STATEMENT)
+
+
+State 107
+
+    9 STATEMENT: IF LBR Exp RBR WHOLESTATEMENT ELSE . WHOLESTATEMENT
+
+    LCBR  shift, and go to state 17
+
+    $default  reduce using rule 16 (WHOLESTATEMENT)
+
+    WHOLESTATEMENT  go to state 108
+
+
+State 108
+
+    9 STATEMENT: IF LBR Exp RBR WHOLESTATEMENT ELSE WHOLESTATEMENT .
+
+    $default  reduce using rule 9 (STATEMENT)

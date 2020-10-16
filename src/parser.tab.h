@@ -97,7 +97,8 @@ extern int yydebug;
     DEFINE_LIST = 303,
     EXT_DEF_LIST = 304,
     EXT_DEF = 305,
-    LOWER_THEN_ELSE = 306
+    FUNCTION = 306,
+    LOWER_THEN_ELSE = 307
   };
 #endif
 
@@ -114,7 +115,7 @@ union YYSTYPE
         char cmpCommand[2];
         class ASTNode *ptr;
 
-#line 118 "parser.tab.h"
+#line 119 "parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

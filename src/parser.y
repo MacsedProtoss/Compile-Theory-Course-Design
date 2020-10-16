@@ -33,7 +33,7 @@ int yylex();
 %token NEW ANNOUNCE ASSIGN LBR RBR LCBR RCBR RETURN IF ELSE WHILE BREAK CONTINUE FUNC FUNC_RETURN_TYPE COMMA EOL
 %token AND OR NOT PLUS MINUS MULTI DIVID INCREASE DECREASE 
 %token FUNC_CALL FUNC_ANNOUNCE IF_THEN IF_THEN_ELSE Exp_STATMENT WHOLE_STATEMENT STATEMENT_LIST ARGS FUNC_PARAMETERS FUNC_PARAMETER 
-%token VAR_LIST VAR_DEFINE DEFINE_ASSIGN DEFINE_LIST EXT_DEF_LIST EXT_DEF
+%token VAR_LIST VAR_DEFINE DEFINE_ASSIGN DEFINE_LIST EXT_DEF_LIST EXT_DEF FUNCTION
 
 
 %left ASSIGN
@@ -58,17 +58,17 @@ ExternalDefineList:
         ;
 
 ExternalDefine:
-        DEFINE {$$=make_node(EXT_DEF,yylineno,{$1});}
-      | FUNCDEFINE WHOLESTATEMENT {$$=make_node(EXT_DEF,yylineno,{$1,$2});}
+        DEFINE {$$=$1;}
+      | FUNCDEFINE WHOLESTATEMENT {$$=make_node(FUNCTION,yylineno,{$1,$2});}
       | error EOL {$$=nullptr;}
+      | EOL {$$=nullptr;}
         ;
 STATEMENT:
-        WHOLESTATEMENT {$$=$1;}
       
-      | IF LBR Exp RBR STATEMENT %prec LOWER_THEN_ELSE {$$=make_node(IF_THEN,yylineno,{$3,$5});}
-      | IF LBR Exp RBR STATEMENT ELSE STATEMENT {$$=make_node(IF_THEN_ELSE,yylineno,{$3,$5,$7});}
+      IF LBR Exp RBR WHOLESTATEMENT %prec LOWER_THEN_ELSE {$$=make_node(IF_THEN,yylineno,{$3,$5});}
+      | IF LBR Exp RBR WHOLESTATEMENT ELSE WHOLESTATEMENT {$$=make_node(IF_THEN_ELSE,yylineno,{$3,$5,$7});}
       
-      | WHILE LBR Exp RBR STATEMENT {$$=make_node(WHILE,yylineno,{$3,$5});}
+      | WHILE LBR Exp RBR WHOLESTATEMENT {$$=make_node(WHILE,yylineno,{$3,$5});}
 
       | BREAK EOL {$$=make_node(BREAK,yylineno);}
       | CONTINUE EOL {$$=make_node(CONTINUE,yylineno);}
@@ -82,7 +82,8 @@ WHOLESTATEMENT:
       | LCBR DEFINELIST STATEMENTLIST RCBR {$$=make_node(WHOLE_STATEMENT,yylineno,{$2,$3});}
       ;
 STATEMENTLIST:
-      STATEMENT STATEMENTLIST {$$=make_node(STATEMENT_LIST,yylineno,{$1,$2});}
+        STATEMENT {$$=make_node(STATEMENT_LIST,yylineno,{$1});}
+      | STATEMENT STATEMENTLIST {$$=make_node(STATEMENT_LIST,yylineno,{$1,$2});}
       ;
 
 PARAMETERS:
@@ -91,7 +92,7 @@ PARAMETERS:
         ;
 
 PARAMETER:
-        VAR ANNOUNCE Specifier {$$=make_node(FUNC_PARAMETER,yylineno);}
+        VAR ANNOUNCE Specifier {$$=make_node(FUNC_PARAMETER,yylineno,{$1,$3});}
         ;
 
 VARLIST:
@@ -108,7 +109,7 @@ DEFINE:
         NEW VARLIST ANNOUNCE Specifier {$$=make_node(VAR_DEFINE,yylineno,{$2,$4});}
         ;
 DEFINEASSIGN:
-        DEFINE ASSIGN Exp {$$=make_node(DEFINE_ASSIGN,yylineno,{$1,$3});}
+        DEFINE ASSIGN Exp {$$=make_node(ASSIGN,yylineno,{$1,$3});}
         ;
 DEFINELIST:
         {$$=NULL;}
@@ -144,7 +145,7 @@ Exp:
       | ID LBR RBR      {$$=make_node(FUNC_CALL,yylineno);$$->data = $1;}
 
       | ID              {$$=make_node(ID,yylineno);$$->data = $1;}
-      | INTEGER         {$$=make_node(INT,yylineno);$$->data=$1;$$->type="Int";}
+      | INTEGER         {$$=make_node(INTEGER,yylineno);$$->data=$1;$$->type="Int";}
       | FLOAT           {$$=make_node(FLOAT,yylineno);$$->data=$1;$$->type="Float";}
       | CHAR            {$$=make_node(CHAR,yylineno);$$->data=$1;$$->type="Char";}
       ;       

@@ -23,32 +23,6 @@ typedef union {
 "Char"										{strcpy(yylval.idValue,yytext);  return TYPE;}
 "Int"										{strcpy(yylval.idValue,yytext);  return TYPE;}
 "Float"										{strcpy(yylval.idValue,yytext);  return TYPE;}
-"'"[A-Za-z0-9_]"'"							{yylval.charValue=yytext[1];  return CHAR;}
-[+-]?0.[0-9]*|[+-]?[1-9][0-9]*.[0-9]*       {yylval.floatValue=atof(yytext); return FLOAT;}
-0|[+-]?[1-9][0-9]*                          {yylval.intValue=atoi(yytext);	return INTEGER;}
-[_a-zA-Z][_a-zA-Z0-9]*                      {strcpy(yylval.idValue,yytext);	return ID;}
-
-">"|"<"|">="|"<="|"=="|"!="					{strcpy(yylval.cmpCommand,yytext);	return COMPARE;}
-
-"&&"										{return AND;}
-"||"										{return OR;}
-"!"											{return NOT;}
-
-"+"											{return PLUS;}
-"-"											{return MINUS;}
-"*"											{return MULTI;}
-"/"											{return DIVID;}
-
-"++"										{return INCREASE;}
-"--"										{return DECREASE;}
-
-"("											{return LBR;}
-")"											{return RBR;}
-"{"											{return LCBR;}
-"}"											{return RCBR;}
-
-"="											{return ASSIGN;}
-
 "return"     								{return RETURN;}
 "if"         								{return IF;}
 "else"       								{return ELSE;}
@@ -59,7 +33,33 @@ typedef union {
 "func"										{return FUNC;}
 "->"										{return FUNC_RETURN_TYPE;}
 
+">"|"<"|">="|"<="|"=="|"!="					{strcpy(yylval.cmpCommand,yytext);	return COMPARE;}
+
+"&&"										{return AND;}
+"||"										{return OR;}
+"!"											{return NOT;}
+
+[+]											{return PLUS;}
+[-]											{return MINUS;}
+[*]											{return MULTI;}
+[/]											{return DIVID;}
+
+"++"										{return INCREASE;}
+"--"										{return DECREASE;}
+
+[(]											{return LBR;}
+[)]											{return RBR;}
+[{]											{return LCBR;}
+[}]											{return RCBR;}
+
+[=]											{return ASSIGN;}
+
 [,]											{return COMMA;}
+
+['][A-Za-z0-9_][']							{yylval.charValue=yytext[1];  return CHAR;}
+[+-]?0.[0-9]*|[+-]?[1-9][0-9]*.[0-9]*       {yylval.floatValue=atof(yytext); return FLOAT;}
+0|[+-]?[1-9][0-9]*                          {yylval.intValue=atoi(yytext);	return INTEGER;}
+[_a-zA-Z][_a-zA-Z0-9]*                      {strcpy(yylval.idValue,yytext);	return ID;}
 
 [\n;]	                                	{return EOL;}
 [ \r\t]     								{}
