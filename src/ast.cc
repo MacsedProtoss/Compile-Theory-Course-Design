@@ -1,5 +1,6 @@
 #include "swift-lite.h"
 #include "stdio.h"
+#define SPACECOUNT 4
 
 Operation::Operation() : data(0), kind(0), type(0), level(0) {}
 CodeNode::CodeNode() : op(0), next(nullptr), prior(nullptr) {}
@@ -35,10 +36,10 @@ ASTNode *make_node(int kind, int pos, vector<ASTNode *> nodes){
 void print_sub_ast_nodes(ASTNode *node, int indent,int count){
     for (int i = 0;i < 4 && i<count;i++){
         if (node->ptr[i] == nullptr){
-            printf("unexpectedly found null ptr while printing node.\nCurrent Index is %d,expecting max index is %d.\n",i,count - 1);
+            //printf("unexpectedly found null ptr while printing node.\nCurrent Index is %d,expecting max index is %d.\n",i,count - 1);
             return;
         }
-        print_ast_node(node->ptr[i],indent + 2);
+        print_ast_node(node->ptr[i],indent + SPACECOUNT);
     }
 }
 
@@ -71,6 +72,7 @@ void print_ast_node(ASTNode *node, int indent){
             break;
         case COMPARE:
             printf("%*cCOMPARE: %s\n", indent,' ', get<string>(node->data).c_str());
+            print_sub_ast_nodes(node,indent,2);
             break;
         case ASSIGN:
             printf("%*c%s: \n", indent,' ', "ASSIGN");
@@ -130,7 +132,7 @@ void print_ast_node(ASTNode *node, int indent){
             printf("%*c%s: \n", indent,' ', "ARGS");
             while (temp)
             {
-                printf("%*cArg[%d]:\n",indent + 2,' ',index);
+                printf("%*cArg[%d]:\n",indent + SPACECOUNT,' ',index);
                 print_sub_ast_nodes(temp,indent,1);
                 temp = temp->ptr[1];
                 index++;
@@ -145,7 +147,7 @@ void print_ast_node(ASTNode *node, int indent){
             printf("%*c%s: \n", indent,' ', "DEFINE_LIST");
             while (temp)
             {
-                printf("%*cArg[%d]:\n",indent + 2,' ',index);
+                printf("%*cArg[%d]:\n",indent + SPACECOUNT,' ',index);
                 print_sub_ast_nodes(temp,indent,1);
                 temp = temp->ptr[1];
                 index++;
@@ -159,7 +161,7 @@ void print_ast_node(ASTNode *node, int indent){
             printf("%*cVAR_LIST: \n", indent,' ');
 
             while(temp){
-                printf("%*cVAR_LIST[%d]: \n", indent+2,' ', index);
+                printf("%*cVAR_LIST[%d]: \n", indent + SPACECOUNT,' ', index);
                 print_sub_ast_nodes(temp,indent,1);
                 temp = temp->ptr[1];
                 index++;
@@ -174,7 +176,7 @@ void print_ast_node(ASTNode *node, int indent){
             printf("%*cFUNC_PARAMETERS: \n", indent,' ');
 
             while(temp){
-                printf("%*cPARAMETERS[%d]: \n", indent+2,' ', index);
+                printf("%*cPARAMETERS[%d]: \n", indent + SPACECOUNT,' ', index);
                 print_sub_ast_nodes(temp,indent,1);
                 temp = temp->ptr[1];
                 index++;
@@ -185,7 +187,7 @@ void print_ast_node(ASTNode *node, int indent){
             printf("%*cSTATEMENT_LIST: \n", indent,' ');
 
             while(temp){
-                printf("%*cSTATEMENT_LIST[%d]: \n", indent+2,' ', index);
+                printf("%*cSTATEMENT_LIST[%d]: \n", indent + SPACECOUNT,' ', index);
                 print_sub_ast_nodes(temp,indent,1);
                 temp = temp->ptr[1];
                 index++;
@@ -223,7 +225,7 @@ void print_ast_node(ASTNode *node, int indent){
             printf("%*cEXT_DEF_LIST: \n", indent,' ');
 
             while(temp){
-                printf("%*cEXT_DEF_LIST[%d]: \n", indent+2,' ', index);
+                printf("%*cEXT_DEF_LIST[%d]: \n", indent + SPACECOUNT,' ', index);
                 print_sub_ast_nodes(temp,indent,1);
                 temp = temp->ptr[1];
                 index++;
