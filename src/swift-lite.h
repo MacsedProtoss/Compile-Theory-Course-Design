@@ -83,18 +83,6 @@ public:
     Symbol();
 };
 
-class FunctionNode
-{
-public:
-    string name;
-    int level;
-    string return_type;
-    vector<Parameter*> parameters;
-    FuncBlock *block;
-
-    FunctionNode();
-};
-
 class Parameter
 {
 public:
@@ -111,6 +99,20 @@ public:
     FuncBlock();
 };
 
+class FunctionNode
+{
+public:
+    string name;
+    int level;
+    string return_type;
+    vector<Parameter*> parameters;
+    FuncBlock *block;
+
+    FunctionNode();
+};
+
+
+
 ASTNode *make_node(int kind, int pos, vector<ASTNode *> nodes = vector<ASTNode *>{});
 void entrypoint(ASTNode *node);
 void bool_expression(ASTNode *node);
@@ -120,3 +122,5 @@ void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
 optional<Symbol> search_symbol_table_with_flag(const string &name, char flag);
 tuple<Function *, FunctionType *, Function *, FunctionType *> inject_print_function(LLVMContext &ctx, IRBuilder<> &builder, Module &module);
 void print_symbol_table();
+void insertFunc(std::string name,FunctionNode* symbol);
+optional<FunctionNode*> search_function_symbol(const string &name);
