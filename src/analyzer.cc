@@ -2,11 +2,11 @@
 #include "stdio.h"
 
 FunctionNode::FunctionNode() : level(0), return_type("void") {}
-FuncBlock::FuncBlock() : node(nullptr) {}
+FuncBlockNode::FuncBlockNode() : node(nullptr) {}
 Parameter::Parameter() : type("Int") {}
 
 void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
-void readSubNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count);
+void readSubFunctionNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count);
 
 void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
 
@@ -20,14 +20,14 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
         
             {try {
                 FunctionNode* p = get<FunctionNode*>(prev); 
-                readSubNodes(node,p,3);
+                readSubFunctionNodes(node,p,3);
             }catch (std::bad_variant_access&) {
                 printf("unexpectedly find func announce outside functions\n");
             }}
             
             break;
         case WHOLE_STATEMENT:
-            {FuncBlock *block = new FuncBlock();
+            {FuncBlockNode *block = new FuncBlockNode();
             block -> node = node;
             try {
                 FunctionNode* p = get<FunctionNode*>(prev); 
@@ -68,7 +68,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
         case FUNC_PARAMETERS:
 
             while(temp){
-                readSubNodes(temp,prev,1);
+                readSubFunctionNodes(temp,prev,1);
                 temp = temp->ptr[1];
             }
 
@@ -78,7 +78,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                 FunctionNode* p = get<FunctionNode*>(prev); 
                 Parameter *pa = new Parameter();
                 (p -> parameters).push_back(pa);
-                readSubNodes(node,pa,2);
+                readSubFunctionNodes(node,pa,2);
             }catch (std::bad_variant_access&) {
                 printf("unexpectedly find func parameters outside functions\n");
             }}
@@ -114,11 +114,11 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
             break;
         case FUNCTION:
             {FunctionNode *func = new FunctionNode();
-            readSubNodes(node,func,2);}
+            readSubFunctionNodes(node,func,2);}
             break;
         case EXT_DEF_LIST:
             while(temp){
-                readSubNodes(temp,prev,1);
+                readSubFunctionNodes(temp,prev,1);
                 temp = temp->ptr[1];
             }
             break;
@@ -130,7 +130,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
 
 }
 
-void readSubNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count){
+void readSubFunctionNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count){
     for (int i = 0;i < 4 && i<count;i++){
         if (node->ptr[i] == nullptr){
             //printf("unexpectedly found null ptr while printing node.\nCurrent Index is %d,expecting max index is %d.\n",i,count - 1);
@@ -140,3 +140,7 @@ void readSubNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int coun
     }
 }
 
+
+void readVariables(ASTNode *node){
+    
+}

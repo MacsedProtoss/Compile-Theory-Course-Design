@@ -11,7 +11,7 @@ func main() {
     }
 
     while (a > 0) {
-        if (add(a, 1) / 2 == 1) {
+        if (add(a, sx1) / 2 == 1) {
             
             break;
         }

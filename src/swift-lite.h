@@ -92,11 +92,11 @@ public:
     Parameter();
 };
 
-class FuncBlock
+class FuncBlockNode
 {
 public:
     ASTNode *node;
-    FuncBlock();
+    FuncBlockNode();
 };
 
 class FunctionNode
@@ -106,12 +106,29 @@ public:
     int level;
     string return_type;
     vector<Parameter*> parameters;
-    FuncBlock *block;
+    FuncBlockNode *block;
 
     FunctionNode();
 };
 
+class Variable
+{
+public:
+    string name;
+    string type;
+    variant<char,int,float> value;
+    bool hasValue;
+};
 
+class VariableList
+{
+public:
+    VariableList *father;
+    string namespacing;
+    std::unordered_map<int, Variable*> variables;
+
+    VariableList();
+};
 
 ASTNode *make_node(int kind, int pos, vector<ASTNode *> nodes = vector<ASTNode *>{});
 void entrypoint(ASTNode *node);
@@ -124,3 +141,5 @@ tuple<Function *, FunctionType *, Function *, FunctionType *> inject_print_funct
 void print_symbol_table();
 void insertFunc(std::string name,FunctionNode* symbol);
 optional<FunctionNode*> search_function_symbol(const string &name);
+
+VariableList *globalVars;
