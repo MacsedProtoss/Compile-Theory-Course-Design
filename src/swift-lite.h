@@ -83,11 +83,40 @@ public:
     Symbol();
 };
 
+class FunctionNode
+{
+public:
+    string name;
+    int level;
+    string return_type;
+    vector<Parameter*> parameters;
+    FuncBlock *block;
+
+    FunctionNode();
+};
+
+class Parameter
+{
+public:
+
+    string name;
+    string type;
+    Parameter();
+};
+
+class FuncBlock
+{
+public:
+    ASTNode *node;
+    FuncBlock();
+};
+
 ASTNode *make_node(int kind, int pos, vector<ASTNode *> nodes = vector<ASTNode *>{});
 void entrypoint(ASTNode *node);
 void bool_expression(ASTNode *node);
 void expression(ASTNode *node);
 void print_llvm_ir(shared_ptr<CodeNode> head);
+void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
 optional<Symbol> search_symbol_table_with_flag(const string &name, char flag);
 tuple<Function *, FunctionType *, Function *, FunctionType *> inject_print_function(LLVMContext &ctx, IRBuilder<> &builder, Module &module);
 void print_symbol_table();
