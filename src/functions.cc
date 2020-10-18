@@ -3,9 +3,11 @@
 
 
 std::unordered_map<std::string, FunctionNode*> functionMap;
+std::vector<FunctionNode*> functionArr;
 
 void insertFunc(std::string name,FunctionNode* symbol){
     functionMap.insert(std::make_pair(name,symbol));
+    functionArr.push_back(symbol);
     printf("function inserted : %s\n",(symbol->name).c_str());
 }
 
@@ -15,4 +17,8 @@ optional<FunctionNode*> search_function_symbol(const string &name){
         return it->second;
     }
     return nullopt;
+}
+
+FunctionNode* get_function_symbol(const int index){
+    return functionArr.at(index);
 }

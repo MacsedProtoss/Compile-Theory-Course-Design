@@ -10,7 +10,12 @@ vector<Symbol> symbol_table;
 vector<int> symbol_scope_chain_stack;
 
 void entrypoint(ASTNode* node){
+
+    globalVars = new VariableList();
+    globalVars->namespacing = "global";
+
     readFuncs(node,(FunctionNode *)nullptr);
+    // readVaribales(node);
     return;
 }
 

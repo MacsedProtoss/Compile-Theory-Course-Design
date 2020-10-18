@@ -1,7 +1,10 @@
-
+var c : Int;
+var d : Int;
 func add(a : Int, b : Int) -> Int {
     return a + b;
 }
+
+var e : Int;
 
 func main() {
     var a : Int = 12;
@@ -19,3 +22,5 @@ func main() {
     }
     return 0;
 }
+
+var f : Int

@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.def": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "unordered_map": "cpp"
     }
 }

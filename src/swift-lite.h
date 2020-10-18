@@ -34,6 +34,8 @@ using std::string, std::unordered_map, std::vector, std::variant, std::shared_pt
 #define PRINT_AST 1
 #define PRINT_SYMBOL_TABLE 0
 
+class VariableList;
+
 class Operation{
 public:
     int kind;
@@ -92,11 +94,13 @@ public:
     Parameter();
 };
 
-class FuncBlockNode
+class Block
 {
 public:
-    ASTNode *node;
-    FuncBlockNode();
+    ASTNode *EntryNode;
+    VariableList* varlist;
+
+    Block();
 };
 
 class FunctionNode
@@ -106,7 +110,7 @@ public:
     int level;
     string return_type;
     vector<Parameter*> parameters;
-    FuncBlockNode *block;
+    Block *block;
 
     FunctionNode();
 };
@@ -118,6 +122,7 @@ public:
     string type;
     variant<char,int,float> value;
     bool hasValue;
+    Variable();
 };
 
 class VariableList
@@ -141,5 +146,10 @@ tuple<Function *, FunctionType *, Function *, FunctionType *> inject_print_funct
 void print_symbol_table();
 void insertFunc(std::string name,FunctionNode* symbol);
 optional<FunctionNode*> search_function_symbol(const string &name);
+FunctionNode* get_function_symbol(const int index);
 
-VariableList *globalVars;
+void readVaribales(ASTNode *node);
+void insertVariable(Variable* var,VariableList *list,int line);
+
+
+static VariableList *globalVars;
