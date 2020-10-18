@@ -99,7 +99,7 @@ class Block
 public:
     ASTNode *EntryNode;
     VariableList* varlist;
-
+    string name;
     Block();
 };
 

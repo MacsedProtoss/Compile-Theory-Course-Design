@@ -2,7 +2,7 @@
 #include "stdio.h"
 
 FunctionNode::FunctionNode() : level(0), return_type("void") {}
-Block::Block() : EntryNode(nullptr) {}
+Block::Block() : EntryNode(nullptr) ,name(""){}
 Parameter::Parameter() : type("Int") {}
 
 void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
@@ -32,6 +32,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
             try {
                 FunctionNode* p = get<FunctionNode*>(prev); 
                 p -> block = block;
+                block->name = p->name;
                 insertFunc(p->name,p);
             }catch (std::bad_variant_access&) {
                 printf("unexpectedly find whole statements outside functions\n");
@@ -146,20 +147,40 @@ public:
     string type;
     vector <string> names;
     int level;
+    variant<char,int,float>data;
+    bool hasValue;
     VariableNode();
 };
 
-VariableNode::VariableNode() : type("Int") {}
+VariableNode::VariableNode() : type("Int") ,hasValue(false) {}
 
 static int funcIndex = 0;
+void readVariablesInBlock(Block *block,VariableList* father,string name);
+void readVariablesWithNode(ASTNode *node,VariableList *list,int level);
 
 void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
     if (node){
         switch (node -> kind){
+            case ASSIGN:
+            {
+                VariableNode *vn = new VariableNode();
+                vn -> level = level;
+                vn ->hasValue = true;
+                for (int i = 0; i < 2; i++)
+                {
+                    readVariablesGlobal(node->ptr[i],vn,level);
+                }
+            }
+                
+                break;
             case VAR_DEFINE:
                 {
-                    VariableNode *vn = new VariableNode();
-                    vn -> level = level;
+                    VariableNode *vn = prev;
+                    if (prev == nullptr){
+                        vn = new VariableNode();
+                        vn -> level = level;
+                    }
+                    
                     for (int i = 0; i < 2; i++)
                     {
                         readVariablesGlobal(node->ptr[i],vn,level);
@@ -172,6 +193,9 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
                         Variable *variable = new Variable();
                         variable -> name = name;
                         variable -> type = type;
+                        if (vn -> hasValue){
+                            variable ->value = vn -> data;
+                        }
                         globalVars -> variables.insert(std::make_pair(level,variable));
                     }
                     
@@ -215,9 +239,61 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
             case FUNCTION:
                 {
                     FunctionNode *func = get_function_symbol(funcIndex);
-                    readVariablesInBlock(func->block,globalVars);
+                    readVariablesInBlock(func->block,globalVars,func->name);
                     funcIndex++;
                 }
+                break;
+            
+            default:
+                readVariablesWithNode(node,globalVars,level);
+                break;
+        }
+    }
+}
+
+// void readVariablesInBlock(Block *block,VariableList* father){
+
+// }
+void readVariablesWithNode(ASTNode *node,VariableList *list,int level){
+    if (node){
+        switch(node -> kind){
+            case IF_THEN:
+                break;
+            case IF_THEN_ELSE:
+                break;
+            case WHILE:
+                break;
+            case CONTINUE:
+                break;
+            case RETURN:
+                break;
+            case FUNC_CALL:
+                break;
+            case Exp_STATMENT:
+                break;
+            case VAR_DEFINE:
+                break;
+            case ASSIGN:
+                break;
+            case AND:
+                break;
+            case OR:
+                break;
+            case COMPARE:
+                break;
+            case PLUS:
+                break;
+            case MINUS:
+                break;
+            case MULTI:
+                break;
+            case DIVID:
+                break;
+            case NOT:
+                break;
+            case INCREASE:
+                break;
+            case DECREASE:
                 break;
             default:
                 break;
@@ -225,204 +301,37 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
     }
 }
 
-void readVariablesInBlock(Block *block,VariableList* father){
+void readVariablesInBlock(Block *block,VariableList* father,string name){
+    ASTNode *node = block -> EntryNode;
+    VariableList *list = new VariableList();
+    list ->namespacing = name;
+    list -> father = father;
+    block ->varlist = list;
+
+    if (node){
+
+        switch ( (node->kind))
+        {
+        
+        case STATEMENT_LIST:
+            
+            {
+                int index = 0;
+                ASTNode *temp = node;
+                while(temp){
+                    readVariablesWithNode(temp,list,index);
+                    temp = temp->ptr[1];
+                    index ++;
+                }
+            }
+
+            break;
+        default:
+            break;
+        }
+    }
 
 }
-// void readVariablesInBlock(Block *block,VariableList* father){
-//     #if PRINT_AST == 0
-//     return;
-//     #endif
-
-//     if (node){
-
-//         ASTNode *temp = node;
-//         int index = 1;
-
-//         switch ( (node->kind))
-//         {
-//         case ID:
-//             printf("%*cID: %s\n", indent, ' ', get<string>(node->data).c_str());
-//             break;
-//         case INTEGER:
-//             printf("%*cINTEGER: %d\n", indent, ' ', get<int>(node->data));
-//             break;
-//         case FLOAT:
-//             printf("%*cFLOAT: %f\n", indent, ' ', get<float>(node->data));
-//             break;
-//         case CHAR:
-//             printf("%*cCHAR: %c\n", indent, ' ', get<char>(node->data));
-//             break;
-//         case TYPE:
-//             printf("%*cTYPE: %s\n", indent,' ', node->type.c_str());
-//             break;
-//         case COMPARE:
-//             printf("%*cCOMPARE: %s\n", indent,' ', get<string>(node->data).c_str());
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-//         case ASSIGN:
-//             printf("%*c%s: \n", indent,' ', "ASSIGN");
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-//         case AND:
-//             printf("%*c%s: \n", indent,' ', "AND");
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-//         case OR:
-//             printf("%*c%s: \n", indent,' ', "OR");
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-//         case PLUS:
-//             printf("%*c%s: \n", indent,' ', "PLUS");
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-//         case MINUS:
-//             printf("%*c%s: \n", indent,' ', "MINUS");
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-//         case MULTI:
-//             printf("%*c%s: \n", indent,' ', "MULTI");
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-//         case DIVID:
-//             printf("%*c%s: \n", indent,' ', "DIVID");
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-//         case NOT:
-//             printf("%*c%s: \n", indent,' ', "NOT");
-//             print_sub_ast_nodes(node,indent,1);
-//             break;
-//         case INCREASE:
-//             printf("%*c%s: \n", indent,' ', "INCREASE");
-//             print_sub_ast_nodes(node,indent,1);
-//             break;
-//         case DECREASE: 
-//             printf("%*c%s: \n", indent,' ', "DECREASE");
-//             print_sub_ast_nodes(node,indent,1);
-//             break;
-//         case BREAK:
-//             printf("%*c%s: \n", indent,' ', "BREAK");
-//             break;
-//         case CONTINUE:
-//             printf("%*c%s: \n", indent,' ', "CONTINUE");
-//             break;
-//         case RETURN:
-//             printf("%*c%s: \n", indent,' ', "RETURN");
-//             print_sub_ast_nodes(node,indent,1);
-//             break;
-//         case FUNC_CALL:
-//             printf("%*cFUNC_CALL:%s \n", indent,' ', get<string>(node->data).c_str());
-//             print_sub_ast_nodes(node,indent,1);
-//             break;
-//         case ARGS:
-//             printf("%*c%s: \n", indent,' ', "ARGS");
-//             while (temp)
-//             {
-//                 printf("%*cArg[%d]:\n",indent + SPACECOUNT,' ',index);
-//                 print_sub_ast_nodes(temp,indent,1);
-//                 temp = temp->ptr[1];
-//                 index++;
-//             }
-            
-//             break;
-//         case FUNC_ANNOUNCE:
-//             printf("%*c%s: \n", indent,' ', "FUNC_ANNOUNCE");
-//             print_sub_ast_nodes(node,indent,3);
-//             break;
-//         case DEFINE_LIST:
-//             printf("%*c%s: \n", indent,' ', "DEFINE_LIST");
-//             while (temp)
-//             {
-//                 printf("%*cArg[%d]:\n",indent + SPACECOUNT,' ',index);
-//                 print_sub_ast_nodes(temp,indent,1);
-//                 temp = temp->ptr[1];
-//                 index++;
-//             }
-//             break;
-//         case VAR_DEFINE:
-//             printf("%*c%s: \n", indent,' ', "VAR_DEFINE");
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-//         case VAR_LIST:
-//             printf("%*cVAR_LIST: \n", indent,' ');
-
-//             while(temp){
-//                 printf("%*cVAR_LIST[%d]: \n", indent + SPACECOUNT,' ', index);
-//                 print_sub_ast_nodes(temp,indent,1);
-//                 temp = temp->ptr[1];
-//                 index++;
-//             }
-
-//             break;
-//         case FUNC_PARAMETER:
-//             printf("%*cFUNC_PARAMETER: \n", indent,' ');
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-//         case FUNC_PARAMETERS:
-//             printf("%*cFUNC_PARAMETERS: \n", indent,' ');
-
-//             while(temp){
-//                 printf("%*cPARAMETERS[%d]: \n", indent + SPACECOUNT,' ', index);
-//                 print_sub_ast_nodes(temp,indent,1);
-//                 temp = temp->ptr[1];
-//                 index++;
-//             }
-
-//             break;
-//         case STATEMENT_LIST:
-//             printf("%*cSTATEMENT_LIST: \n", indent,' ');
-
-//             while(temp){
-//                 printf("%*cSTATEMENT_LIST[%d]: \n", indent + SPACECOUNT,' ', index);
-//                 print_sub_ast_nodes(temp,indent,1);
-//                 temp = temp->ptr[1];
-//                 index++;
-//             }
-
-//             break;
-//         case WHOLE_STATEMENT:
-//             printf("%*c%s: \n", indent,' ', "WHOLE_STATEMENT");
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-
-//         case Exp_STATMENT:
-//             printf("%*c%s: \n", indent,' ', "Exp_STATMENT");
-//             print_sub_ast_nodes(node,indent,1);
-//             break;
-
-//         case WHILE:
-//             printf("%*c%s: \n", indent,' ', "WHILE");
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-
-//         case IF_THEN_ELSE:
-//             printf("%*c%s: \n", indent,' ', "IF_THEN_ELSE");
-//             print_sub_ast_nodes(node,indent,3);
-//             break;
-//         case IF_THEN:
-//             printf("%*c%s: \n", indent,' ', "IF_THEN");
-//             print_sub_ast_nodes(node,indent,3);
-//             break;
-//         case FUNCTION:
-//             printf("%*c%s: \n", indent,' ', "FUNCTION");
-//             print_sub_ast_nodes(node,indent,2);
-//             break;
-//         case EXT_DEF_LIST:
-//             printf("%*cEXT_DEF_LIST: \n", indent,' ');
-
-//             while(temp){
-//                 printf("%*cEXT_DEF_LIST[%d]: \n", indent + SPACECOUNT,' ', index);
-//                 print_sub_ast_nodes(temp,indent,1);
-//                 temp = temp->ptr[1];
-//                 index++;
-//             }
-
-//             break;
-//         default:
-//             break;
-//         }
-//     }
-
-// }
 
 
 void readVariables(ASTNode *node){

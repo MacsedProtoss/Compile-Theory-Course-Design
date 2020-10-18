@@ -1,4 +1,4 @@
-var c : Int;
+var c : Int = 2 + 3;
 var d : Int;
 func add(a : Int, b : Int) -> Int {
     return a + b;
