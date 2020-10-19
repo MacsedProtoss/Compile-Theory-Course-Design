@@ -14,6 +14,8 @@ void entrypoint(ASTNode* node){
     globalVars = new VariableList();
     globalVars->namespacing = "global";
 
+    SemanticsError = false;
+
     readFuncs(node,(FunctionNode *)nullptr);
     // readVaribales(node);
     return;

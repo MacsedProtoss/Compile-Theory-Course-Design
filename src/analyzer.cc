@@ -1,9 +1,10 @@
 #include "swift-lite.h"
 #include "stdio.h"
 
-FunctionNode::FunctionNode() : level(0), return_type("void") {}
-Block::Block() : EntryNode(nullptr) ,name(""){}
+FunctionNode::FunctionNode() : level(0), return_type("Void") {}
+Block::Block() : EntryNode(nullptr) ,name(""),opt(nullptr){}
 Parameter::Parameter() : type("Int") {}
+Operation::Operation() : data(0), kind(0), type("Void"), level(0),next(nullptr) ,subOpts({}){}
 
 void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
 void readSubFunctionNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count);
@@ -17,12 +18,12 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
         switch ( (node->kind)){
         
         case FUNC_ANNOUNCE:
-        
             {try {
-                FunctionNode* p = get<FunctionNode*>(prev); 
+                FunctionNode* p = get<FunctionNode*>(prev);
                 readSubFunctionNodes(node,p,3);
             }catch (std::bad_variant_access&) {
                 printf("unexpectedly find func announce outside functions\n");
+                SemanticsError = true;
             }}
             
             break;
@@ -36,6 +37,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                 insertFunc(p->name,p);
             }catch (std::bad_variant_access&) {
                 printf("unexpectedly find whole statements outside functions\n");
+                SemanticsError = true;
             } }
             break;
         case ID:
@@ -61,6 +63,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
 
                 if (flag){
                     printf("unexpectedly find ID");
+                    SemanticsError = true;
                 }
 
             }
@@ -82,6 +85,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                 readSubFunctionNodes(node,pa,2);
             }catch (std::bad_variant_access&) {
                 printf("unexpectedly find func parameters outside functions\n");
+                SemanticsError = true;
             }}
             break;
         case TYPE:
@@ -108,14 +112,17 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
 
                 if (flag == 1){
                     printf("unexpectedly find type\n");
+                    SemanticsError = true;
                 }
             
             }
             
             break;
         case FUNCTION:
-            {FunctionNode *func = new FunctionNode();
-            readSubFunctionNodes(node,func,2);}
+            {
+                FunctionNode *func = new FunctionNode();
+                readSubFunctionNodes(node,func,2);
+            }
             break;
         case EXT_DEF_LIST:
             while(temp){
@@ -156,7 +163,7 @@ VariableNode::VariableNode() : type("Int") ,hasValue(false) {}
 
 static int funcIndex = 0;
 void readVariablesInBlock(Block *block,VariableList* father,string name);
-void readVariablesWithNode(ASTNode *node,VariableList *list,int level);
+void readVariablesWithNode(ASTNode *node,VariableNode *prev,VariableList *list,int level);
 
 void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
     if (node){
@@ -166,9 +173,21 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
                 VariableNode *vn = new VariableNode();
                 vn -> level = level;
                 vn ->hasValue = true;
-                for (int i = 0; i < 2; i++)
-                {
-                    readVariablesGlobal(node->ptr[i],vn,level);
+                readVariablesGlobal(node->ptr[0],vn,level);
+                readVariablesWithNode(node,vn,globalVars,level);
+
+                Operation *newOp = new Operation();
+                newOp -> kind = DEFINE_ASSIGN;
+                newOp -> data = vn -> data;
+                newOp -> level = vn -> level;
+                newOp -> type  = vn -> type;
+
+                if (entryOperation == nullptr){
+                    entryOperation = newOp;
+                    currentOperation = entryOperation;
+                }else{
+                    currentOperation -> next = newOp;
+                    currentOperation = newOp;
                 }
             }
                 
@@ -198,6 +217,24 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
                         }
                         globalVars -> variables.insert(std::make_pair(level,variable));
                     }
+
+
+                    Operation *newOp = new Operation();
+                    newOp -> kind = VAR_DEFINE;
+                    newOp ->level = vn -> level;
+                    newOp ->type = vn -> type;
+                    if (prev == nullptr){
+                        
+                        if (entryOperation == nullptr){
+                            entryOperation = newOp;
+                            currentOperation = entryOperation;
+                        }else{
+                            currentOperation -> next = newOp;
+                            currentOperation = newOp;
+                        }
+                    }else{
+                        currentOperation ->subOpts.push_back(newOp);
+                    }
                     
                 }
                 break;
@@ -223,6 +260,7 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
                     catch(const std::exception& e)
                     {
                         printf("unexpetedly find no ID in variable list\n");
+                        SemanticsError = true;
                     }
                     
                 }
@@ -230,8 +268,7 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
             case EXT_DEF_LIST:
                 {
                     ASTNode *temp = node;
-                    while(temp){
-                        
+                    while(temp){                        
                         readVariablesGlobal(temp,nullptr,level+1);
                         temp = temp->ptr[1];
                     }
@@ -239,13 +276,26 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
             case FUNCTION:
                 {
                     FunctionNode *func = get_function_symbol(funcIndex);
+                    
+                    Operation *newOp = new Operation();
+                    newOp ->kind = FUNC_ANNOUNCE;
+                    newOp ->level = func -> level;
+                    newOp ->type = func ->return_type;
+                    
+                    if (entryOperation == nullptr){
+                        entryOperation = newOp;
+                        currentOperation = entryOperation;
+                    }else{
+                        currentOperation -> next = newOp;
+                        currentOperation = newOp;
+                    }
+
                     readVariablesInBlock(func->block,globalVars,func->name);
                     funcIndex++;
                 }
                 break;
             
             default:
-                readVariablesWithNode(node,globalVars,level);
                 break;
         }
     }
@@ -254,7 +304,7 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
 // void readVariablesInBlock(Block *block,VariableList* father){
 
 // }
-void readVariablesWithNode(ASTNode *node,VariableList *list,int level){
+void readVariablesWithNode(ASTNode *node,VariableNode *prev,VariableList *list,int level){
     if (node){
         switch(node -> kind){
             case IF_THEN:
@@ -274,8 +324,22 @@ void readVariablesWithNode(ASTNode *node,VariableList *list,int level){
             case VAR_DEFINE:
                 break;
             case ASSIGN:
+                {
+                    if (prev != nullptr){
+                        printf("unepectedly found assign inside 'exp assign exp'");
+                        SemanticsError = true;
+                    }else{
+                        VariableNode *vn = new VariableNode();
+                        vn -> level = level;
+                        vn -> hasValue = true;
+                        for (int i = 0;i < 2;i++){
+                            readVariablesWithNode(node,vn,list,level);
+                        }
+                    }
+                }
                 break;
             case AND:
+
                 break;
             case OR:
                 break;
@@ -295,6 +359,14 @@ void readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                 break;
             case DECREASE:
                 break;
+            case ID:
+                break;
+            case INTEGER:
+                break;
+            case FLOAT:
+                break;
+            case CHAR:
+                break;
             default:
                 break;
         }
@@ -308,6 +380,12 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
     list -> father = father;
     block ->varlist = list;
 
+    Operation *prevOpt = currentOperation;
+
+    Operation *newOp = new Operation();
+    block ->opt = newOp;
+    currentOperation = newOp;
+
     if (node){
 
         switch ( (node->kind))
@@ -316,13 +394,15 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
         case STATEMENT_LIST:
             
             {
+
                 int index = 0;
                 ASTNode *temp = node;
                 while(temp){
-                    readVariablesWithNode(temp,list,index);
+                    readVariablesWithNode(temp,nullptr,list,index);
                     temp = temp->ptr[1];
                     index ++;
                 }
+                currentOperation = prevOpt;
             }
 
             break;

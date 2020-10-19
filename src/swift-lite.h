@@ -39,10 +39,11 @@ class VariableList;
 class Operation{
 public:
     int kind;
-    int type;
-    variant<int, float, string> data;
+    string type;
+    variant<char,int,float> data;
     int level;
-
+    vector<Operation*> subOpts;
+    Operation *next;
     Operation();
 };
 
@@ -100,6 +101,7 @@ public:
     ASTNode *EntryNode;
     VariableList* varlist;
     string name;
+    Operation *opt;
     Block();
 };
 
@@ -153,3 +155,6 @@ void insertVariable(Variable* var,VariableList *list,int line);
 
 
 static VariableList *globalVars;
+static bool SemanticsError;
+static Operation *entryOperation;
+static Operation *currentOperation;
