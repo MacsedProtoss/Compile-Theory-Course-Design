@@ -4,10 +4,11 @@
 FunctionNode::FunctionNode() : level(0), return_type("Void") {}
 Block::Block() : EntryNode(nullptr) ,name(""),opt(nullptr){}
 Parameter::Parameter() : type("Int") {}
-Operation::Operation() : data(0), kind(0), type("Void"), level(0),next(nullptr) ,subOpts({}){}
+Operation::Operation() : data(0), kind(0), type("Void"), level(0),next(nullptr) ,subOpts({}),blocks({}){}
 
 void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
 void readSubFunctionNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count);
+void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int level);
 
 void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
 
@@ -308,16 +309,135 @@ void readVariablesWithNode(ASTNode *node,VariableNode *prev,VariableList *list,i
     if (node){
         switch(node -> kind){
             case IF_THEN:
+                {
+                    if (currentOperation ->kind == 0){
+                        currentOperation ->kind = IF_THEN;
+                        currentOperation ->level = level;
+                    }else{
+                        Operation *newOp = new Operation();
+                        newOp -> kind = IF_THEN;
+                        newOp -> level = level;
+                        currentOperation -> next = newOp;
+                        currentOperation = newOp;
+                    }
+
+                    for (int i = 0;i < 2;i++){
+                        readVariablesWithNode(node->ptr[i],nullptr,list,level);
+                    }
+                
+                }
+                
                 break;
             case IF_THEN_ELSE:
+                {
+                    if (currentOperation ->kind == 0){
+                        currentOperation ->kind = IF_THEN_ELSE;
+                        currentOperation ->level = level;
+                    }else{
+                        Operation *newOp = new Operation();
+                        newOp -> kind = IF_THEN_ELSE;
+                        newOp -> level = level;
+                        currentOperation -> next = newOp;
+                        currentOperation = newOp;
+                    }
+
+                    for (int i = 0;i < 3;i++){
+                        readVariablesWithNode(node->ptr[i],nullptr,list,level);
+                    }
+                
+                }
                 break;
             case WHILE:
+                {
+                    if (currentOperation ->kind == 0){
+                        currentOperation ->kind = WHILE;
+                        currentOperation ->level = level;
+                    }else{
+                        Operation *newOp = new Operation();
+                        newOp -> kind = WHILE;
+                        newOp -> level = level;
+                        currentOperation -> next = newOp;
+                        currentOperation = newOp;
+                    }
+
+                    for (int i = 0;i < 2;i++){
+                        readVariablesWithNode(node->ptr[i],nullptr,list,level);
+                    }
+                
+                }
+                break;
+            case WHOLE_STATEMENT:
+                {
+                    Block *block = new Block();
+                    block -> EntryNode = node;
+                    currentOperation -> blocks.push_back(block);
+                    block -> name = "INFUNC";
+                    readVariablesInBlock(block,list,"INFUNC");
+                }
                 break;
             case CONTINUE:
+                {
+                    if (currentOperation ->kind == 0){
+                        currentOperation -> kind = CONTINUE;
+                        currentOperation -> level = level;
+                    }else{
+                        Operation *newOp = new Operation();
+                        newOp -> kind = CONTINUE;
+                        newOp -> level = level;
+                        currentOperation -> next = newOp;
+                        currentOperation = newOp;
+                    }
+                }
                 break;
             case RETURN:
+                {
+                    if (currentOperation ->kind == 0){
+                        currentOperation -> kind = RETURN;
+                        currentOperation -> level = level;
+                    }else{
+                        Operation *newOp = new Operation();
+                        newOp -> kind = RETURN;
+                        newOp -> level = level;
+                        currentOperation -> next = newOp;
+                        currentOperation = newOp;
+                    }
+
+                    readVariablesWithNode(node->ptr[0],nullptr,list,level);
+                }
                 break;
             case FUNC_CALL:
+                {
+                    if (currentOperation ->kind == 0){
+                        currentOperation -> kind = FUNC_CALL;
+                        currentOperation -> level = level;
+                    }else{
+                        Operation *newOp = new Operation();
+                        newOp -> kind = FUNC_CALL;
+                        newOp -> level = level;
+                        currentOperation -> next = newOp;
+                        currentOperation = newOp;
+                    }
+
+                    bool flag = false;
+                    FunctionNode *func = nullptr;
+                    for (int i = 0; i < funcIndex; i++){
+                        FunctionNode *funcNode = get_function_symbol(i);
+                        if (funcNode ->name == get<string>(node->data)){
+                            flag = true;
+                            func = funcNode;
+                            break;
+                        }
+                        
+                    }
+
+                    if (flag){
+                        
+                    }else{
+                        printf("Symbol not defined !");
+                        SemanticsError = true;
+                    }
+
+                }
                 break;
             case Exp_STATMENT:
                 break;
@@ -333,7 +453,7 @@ void readVariablesWithNode(ASTNode *node,VariableNode *prev,VariableList *list,i
                         vn -> level = level;
                         vn -> hasValue = true;
                         for (int i = 0;i < 2;i++){
-                            readVariablesWithNode(node,vn,list,level);
+                            readVariablesWithNode(node->ptr[i],vn,list,level);
                         }
                     }
                 }
@@ -411,6 +531,55 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
         }
     }
 
+}
+
+void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int level){
+    ASTNode *temp = node;
+    for (int i = 0; i < func->parameters.size(); i++)
+    {
+        Parameter *param = func->parameters[i];
+        ASTNode *arg = temp->ptr[0];
+        if (arg == nullptr){
+            printf("expecting arg count is %d, but found null at %d", func->parameters.size(),i+1);
+            SemanticsError = true;
+            return;
+        }else{
+            switch (arg->kind)
+            {
+            case ID:
+                if (auto ret = search_variable_symbol(get<string>(node->data),level,list)){
+                    if (param->type == ret.value()->type)
+                    {
+                        
+                    }else{
+                        printf("unexpected arg type at %d",i+1);
+                        SemanticsError = true;
+                    }
+                    
+                }else{
+                    printf("can't find this arg ID at %d",i+1);
+                    SemanticsError = true;
+                }
+                break;
+            case INTEGER:
+
+                break;
+            case FLOAT:
+                break;
+            case CHAR:
+                break;
+            default:
+                printf("unexpected arg type at %d",i+1);
+                SemanticsError = true;
+                break;
+            }
+            
+        }
+        
+        temp = temp->ptr[1];
+
+    }
+    
 }
 
 

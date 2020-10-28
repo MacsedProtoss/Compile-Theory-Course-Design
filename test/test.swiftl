@@ -11,10 +11,12 @@ func main() {
     var b : Float = 1.2 + 3.6;
     if (b > 1.2) {
         
+    }else{
+
     }
 
     while (a > 0) {
-        if (add(a, sx1) / 2 == 1) {
+        if (add(a, 1) / 2 == 1) {
             
             break;
         }

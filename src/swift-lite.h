@@ -35,6 +35,7 @@ using std::string, std::unordered_map, std::vector, std::variant, std::shared_pt
 #define PRINT_SYMBOL_TABLE 0
 
 class VariableList;
+class Block;
 
 class Operation{
 public:
@@ -43,6 +44,7 @@ public:
     variant<char,int,float> data;
     int level;
     vector<Operation*> subOpts;
+    vector<Block*> blocks;
     Operation *next;
     Operation();
 };
@@ -149,6 +151,7 @@ void print_symbol_table();
 void insertFunc(std::string name,FunctionNode* symbol);
 optional<FunctionNode*> search_function_symbol(const string &name);
 FunctionNode* get_function_symbol(const int index);
+optional<Variable*> search_variable_symbol(const string &name,int line,VariableList *list);
 
 void readVaribales(ASTNode *node);
 void insertVariable(Variable* var,VariableList *list,int line);
