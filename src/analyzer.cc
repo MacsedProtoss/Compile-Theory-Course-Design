@@ -4,7 +4,7 @@
 FunctionNode::FunctionNode() : level(0), return_type("Void") {}
 Block::Block() : EntryNode(nullptr) ,name(""),opt(nullptr){}
 Parameter::Parameter() : type("Int") {}
-Operation::Operation() : data(0), kind(0), type("Void"), level(0),next(nullptr) ,subOpts({}),blocks({}){}
+Operation::Operation() : data(0), kind(0), level(0),next(nullptr){}
 
 void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
 void readSubFunctionNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count);
@@ -165,8 +165,10 @@ VariableNode::VariableNode() : type("Int") ,hasValue(false) {}
 static int funcIndex = 0;
 void readVariablesInBlock(Block *block,VariableList* father,string name);
 void readVariablesWithNode(ASTNode *node,VariableNode *prev,VariableList *list,int level);
+Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,int level);
+Operation *readOpt(ASTNode* node,VariableList* list,int level);
 
-void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
+void readVariablesGlobal(ASTNode* node,int level){
     if (node){
         switch (node -> kind){
             case ASSIGN:
@@ -174,36 +176,83 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
                 VariableNode *vn = new VariableNode();
                 vn -> level = level;
                 vn ->hasValue = true;
-                readVariablesGlobal(node->ptr[0],vn,level);
-                readVariablesWithNode(node,vn,globalVars,level);
+                
+                AssignOpt *newOp = new AssignOpt();
+                newOp -> kind = ASSIGN;
+                newOp -> left = readVarDefineOpt(node->ptr[0],nullptr,globalVars,level);
+                newOp -> right = readOpt(node->ptr[1],globalVars,level);
 
-                Operation *newOp = new Operation();
-                newOp -> kind = DEFINE_ASSIGN;
-                newOp -> data = vn -> data;
-                newOp -> level = vn -> level;
-                newOp -> type  = vn -> type;
+                //TODO: vn assign type and name
 
                 if (entryOperation == nullptr){
-                    entryOperation = newOp;
+                    entryOperation = (Operation *)newOp;
                     currentOperation = entryOperation;
                 }else{
-                    currentOperation -> next = newOp;
-                    currentOperation = newOp;
+                    currentOperation -> next = (Operation *)newOp;
+                    currentOperation = (Operation *)newOp;
                 }
             }
                 
                 break;
             case VAR_DEFINE:
                 {
-                    VariableNode *vn = prev;
-                    if (prev == nullptr){
-                        vn = new VariableNode();
-                        vn -> level = level;
+                    Operation *newOp = readVarDefineOpt(node,nullptr,globalVars,level);
+                    //TODO: do something with newOp
+                }
+                break;
+            case EXT_DEF_LIST:
+                {
+                    ASTNode *temp = node;
+                    while(temp){                        
+                        readVariablesGlobal(temp,level+1);
+                        temp = temp->ptr[1];
                     }
+                }
+            case FUNCTION:
+                {
+                    FunctionNode *func = get_function_symbol(funcIndex);
+
+                    readVariablesInBlock(func->block,globalVars,func->name);
+                    funcIndex++;
+                }
+                break;
+            
+            default:
+                break;
+        }
+    }
+}
+
+Operation *readOpt(ASTNode* node,VariableList* list,int level){
+    if (node)
+    {
+        switch (node->kind)
+        {
+        case ID:
+        default:
+            return nullptr;
+            break;
+        }
+    }else{
+        return nullptr;
+    }
+    
+    return nullptr;
+}
+
+Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,int level){
+    if (node)
+    {
+        switch (node->kind)
+        {
+        case VAR_DEFINE:
+                {
+                    VariableNode *vn = new VariableNode();
+                    vn -> level = level;
                     
                     for (int i = 0; i < 2; i++)
                     {
-                        readVariablesGlobal(node->ptr[i],vn,level);
+                        readVarDefineOpt(node->ptr[i],vn,list,level);
                     }
                     
                     for (int i = 0; i < (vn->names).size(); i++)
@@ -220,43 +269,31 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
                     }
 
 
-                    Operation *newOp = new Operation();
+                    DefineOpt *newOp = new DefineOpt();
                     newOp -> kind = VAR_DEFINE;
                     newOp ->level = vn -> level;
                     newOp ->type = vn -> type;
-                    if (prev == nullptr){
-                        
-                        if (entryOperation == nullptr){
-                            entryOperation = newOp;
-                            currentOperation = entryOperation;
-                        }else{
-                            currentOperation -> next = newOp;
-                            currentOperation = newOp;
-                        }
-                    }else{
-                        currentOperation ->subOpts.push_back(newOp);
-                    }
+                    newOp -> names = vn -> names;
+
+                    return (Operation *)newOp;
                     
                 }
                 break;
-            case VAR_LIST:
+        case VAR_LIST:
                 {
                     ASTNode *temp = node;
                     while(temp){
                         
-                        readVariablesGlobal(temp,prev,level);
+                        readVarDefineOpt(temp,var,list,level);
                         temp = temp->ptr[1];
                     }
                 }
                 break;
-            case TYPE:
-                prev -> type = node->type;
-                break;
-            case ID:
+        case ID:
                 {
                     try
                     {
-                        prev->names.push_back(get<string>(node->data));
+                        var->names.push_back(get<string>(node->data));
                     }
                     catch(const std::exception& e)
                     {
@@ -266,45 +303,20 @@ void readVariablesGlobal(ASTNode* node,VariableNode *prev,int level){
                     
                 }
                 break;
-            case EXT_DEF_LIST:
-                {
-                    ASTNode *temp = node;
-                    while(temp){                        
-                        readVariablesGlobal(temp,nullptr,level+1);
-                        temp = temp->ptr[1];
-                    }
-                }
-            case FUNCTION:
-                {
-                    FunctionNode *func = get_function_symbol(funcIndex);
-                    
-                    Operation *newOp = new Operation();
-                    newOp ->kind = FUNC_ANNOUNCE;
-                    newOp ->level = func -> level;
-                    newOp ->type = func ->return_type;
-                    
-                    if (entryOperation == nullptr){
-                        entryOperation = newOp;
-                        currentOperation = entryOperation;
-                    }else{
-                        currentOperation -> next = newOp;
-                        currentOperation = newOp;
-                    }
-
-                    readVariablesInBlock(func->block,globalVars,func->name);
-                    funcIndex++;
-                }
+        case TYPE:
+                var -> type = node->type;
                 break;
-            
-            default:
-                break;
+        default:
+            return nullptr;
+            break;
         }
+    }else{
+        return nullptr;
     }
+    
+    return nullptr;
 }
 
-// void readVariablesInBlock(Block *block,VariableList* father){
-
-// }
 void readVariablesWithNode(ASTNode *node,VariableNode *prev,VariableList *list,int level){
     if (node){
         switch(node -> kind){
@@ -431,9 +443,9 @@ void readVariablesWithNode(ASTNode *node,VariableNode *prev,VariableList *list,i
                     }
 
                     if (flag){
-                        
+                        checkParamters(node->ptr[0],func,list,level);
                     }else{
-                        printf("Symbol not defined !");
+                        printf("Func not defined !");
                         SemanticsError = true;
                     }
 
@@ -459,7 +471,7 @@ void readVariablesWithNode(ASTNode *node,VariableNode *prev,VariableList *list,i
                 }
                 break;
             case AND:
-
+                
                 break;
             case OR:
                 break;
@@ -480,6 +492,19 @@ void readVariablesWithNode(ASTNode *node,VariableNode *prev,VariableList *list,i
             case DECREASE:
                 break;
             case ID:
+                {
+                    if (auto ret = search_variable_symbol(get<string>(node->data),level,list)){
+                        
+                        Operation *newOp = new Operation();
+                        newOp->kind = ID;
+                        newOp -> type = get<string>(node->data);
+                        currentOperation -> subOpts.push_back(newOp);
+        
+                    }else{
+                        printf("Undefined variable: %s",get<string>(node->data));
+                        SemanticsError = true;
+                    }
+                }
                 break;
             case INTEGER:
                 break;
@@ -537,8 +562,15 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
     ASTNode *temp = node;
     for (int i = 0; i < func->parameters.size(); i++)
     {
+        if (temp == nullptr)
+        {
+            printf("expecting arg count is %d, but found null at %d", func->parameters.size(),i+1);
+            SemanticsError = true;
+        }
+
         Parameter *param = func->parameters[i];
         ASTNode *arg = temp->ptr[0];
+
         if (arg == nullptr){
             printf("expecting arg count is %d, but found null at %d", func->parameters.size(),i+1);
             SemanticsError = true;
@@ -547,26 +579,67 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
             switch (arg->kind)
             {
             case ID:
-                if (auto ret = search_variable_symbol(get<string>(node->data),level,list)){
-                    if (param->type == ret.value()->type)
-                    {
-                        
+                {
+                    if (auto ret = search_variable_symbol(get<string>(node->data),level,list)){
+                        if (param->type == ret.value()->type)
+                        {
+                            Operation *newOp = new Operation();
+                            newOp->kind = ID;
+                            newOp -> type = get<string>(node->data);
+                            currentOperation -> subOpts.push_back(newOp);
+                        }else{
+                            printf("unexpected arg type at %d",i+1);
+                            SemanticsError = true;
+                        }
+        
                     }else{
-                        printf("unexpected arg type at %d",i+1);
+                        printf("can't find this arg ID at %d",i+1);
                         SemanticsError = true;
                     }
-                    
-                }else{
-                    printf("can't find this arg ID at %d",i+1);
-                    SemanticsError = true;
                 }
+                    
                 break;
             case INTEGER:
-
+                {
+                    if (param->type == "Int")
+                    {
+                        Operation *newOp = new Operation();
+                        newOp->kind = INTEGER;
+                        newOp -> data = get<int>(node->data);
+                        currentOperation -> subOpts.push_back(newOp);
+                    }else{
+                        printf("unexpected arg type at %d, expecting Int",i+1);
+                        SemanticsError = true;
+                    }
+                }
                 break;
             case FLOAT:
+                {
+                    if (param->type == "Float")
+                    {
+                        Operation *newOp = new Operation();
+                        newOp->kind = INTEGER;
+                        newOp -> data = get<float>(node->data);
+                        currentOperation -> subOpts.push_back(newOp);
+                    }else{
+                        printf("unexpected arg type at %d, expecting Char",i+1);
+                        SemanticsError = true;
+                    }
+                }
                 break;
             case CHAR:
+                {
+                    if (param->type == "Char")
+                    {
+                        Operation *newOp = new Operation();
+                        newOp->kind = INTEGER;
+                        newOp -> data = get<char>(node->data);
+                        currentOperation -> subOpts.push_back(newOp);
+                    }else{
+                        printf("unexpected arg type at %d, expecting Float",i+1);
+                        SemanticsError = true;
+                    }
+                }
                 break;
             default:
                 printf("unexpected arg type at %d",i+1);
@@ -577,7 +650,6 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
         }
         
         temp = temp->ptr[1];
-
     }
     
 }

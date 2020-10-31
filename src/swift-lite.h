@@ -40,11 +40,8 @@ class Block;
 class Operation{
 public:
     int kind;
-    string type;
-    variant<char,int,float> data;
     int level;
-    vector<Operation*> subOpts;
-    vector<Block*> blocks;
+    variant<char,int,float> data;
     Operation *next;
     Operation();
 };
@@ -137,6 +134,50 @@ public:
     std::unordered_map<int, Variable*> variables;
 
     VariableList();
+};
+
+class DefineOpt : public Operation{
+public:
+    vector<string> names;
+    string type;
+    DefineOpt();
+};
+
+class AssignOpt : public Operation{
+public:
+    Operation *left;
+    Operation *right;
+    AssignOpt();
+};
+
+class FuncCallOpt : public Operation{
+public:
+    FunctionNode *func;
+    vector<variant<string,char,int,float>> args;
+    FuncCallOpt();
+};
+
+class ConditionOpt : public Operation{
+public:
+    int compareOpt;
+    Operation *leftExp;
+    Operation *rightExp;
+    ConditionOpt();
+};
+
+class IfOpt : public Operation{
+public:
+    ConditionOpt *condintion;
+    Block *ifBlock;
+    Block *elseBlock;
+    IfOpt();
+};
+
+class WhileOpt : public Operation{
+public:
+    ConditionOpt *condintion;
+    Block *ifBlock;
+    WhileOpt();
 };
 
 ASTNode *make_node(int kind, int pos, vector<ASTNode *> nodes = vector<ASTNode *>{});
