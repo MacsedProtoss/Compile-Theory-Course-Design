@@ -9,7 +9,8 @@ var e : Int;
 func main() {
     var a : Int = 12;
     var b : Float = 1.2 + 3.6;
-    if (b > 1.2) {
+
+    if (!(a = (b > 1.2))) {
         
     }else{
 

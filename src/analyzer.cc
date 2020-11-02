@@ -4,11 +4,24 @@
 FunctionNode::FunctionNode() : level(0), return_type("Void") {}
 Block::Block() : EntryNode(nullptr) ,name(""),opt(nullptr){}
 Parameter::Parameter() : type("Int") {}
-Operation::Operation() : data(0), kind(0), level(0),next(nullptr){}
+Operation::Operation() : kind(0), level(0),next(nullptr){}
+DefineOpt::DefineOpt() : names({}),type(Void) {}
+NormalOpt::NormalOpt() : left(nullptr),right(nullptr) {}
+CompareOpt::CompareOpt() : type(Equal) {}
+RightOpt::RightOpt() : right(nullptr) {}
+VarUseOpt::VarUseOpt() : type(Void) {}
+StaticValueOpt::StaticValueOpt() : type(Void), data(0) {}
+FuncCallOpt::FuncCallOpt() : func(nullptr),args({}) {}
+ConditionOpt::ConditionOpt() : compareOpt(Equal), leftExp(nullptr),rightExp(nullptr) {}
+IfOpt::IfOpt() : condintion(nullptr),ifBlock(nullptr),elseBlock(nullptr) {}
+WhileOpt::WhileOpt() : condintion(nullptr),ifBlock(nullptr) {}
 
 void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
 void readSubFunctionNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count);
 void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int level);
+optType getOptType(string raw);
+compareType getCompareType(string raw);
+variant<char,int,float> getStaticValue(variant<int,float,string,char> origin,optType type);
 
 void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
 
@@ -165,8 +178,9 @@ VariableNode::VariableNode() : type("Int") ,hasValue(false) {}
 static int funcIndex = 0;
 void readVariablesInBlock(Block *block,VariableList* father,string name);
 void readVariablesWithNode(ASTNode *node,VariableNode *prev,VariableList *list,int level);
-Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,int level);
-Operation *readOpt(ASTNode* node,VariableList* list,int level);
+Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,int level); // var a,b = 1, read var a,b
+Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level);// lExp = rExp, read rExp
+Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level);// a > b , !b , a != b , read a & b
 
 void readVariablesGlobal(ASTNode* node,int level){
     if (node){
@@ -177,10 +191,10 @@ void readVariablesGlobal(ASTNode* node,int level){
                 vn -> level = level;
                 vn ->hasValue = true;
                 
-                AssignOpt *newOp = new AssignOpt();
+                NormalOpt *newOp = new NormalOpt();
                 newOp -> kind = ASSIGN;
                 newOp -> left = readVarDefineOpt(node->ptr[0],nullptr,globalVars,level);
-                newOp -> right = readOpt(node->ptr[1],globalVars,level);
+                newOp -> right = readAssignRightOpt(node->ptr[1],globalVars,level);
 
                 //TODO: vn assign type and name
 
@@ -223,17 +237,114 @@ void readVariablesGlobal(ASTNode* node,int level){
     }
 }
 
-Operation *readOpt(ASTNode* node,VariableList* list,int level){
+Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level){
+    if (node)
+    {
+        switch (node->kind)
+        {
+        case ID: case INTEGER :case FLOAT: case CHAR: case COMPARE: case AND: case OR: case PLUS: case MINUS: case MULTI: case DIVID:
+            {
+                return readSimpleOpt(node,list,ASSIGN,level);
+            }
+            break;
+        case ASSIGN:
+            printf("unexpectedly find ASSIGN right of ASSIGN");
+            SemanticsError = true;
+            return nullptr;
+        
+        default:
+            printf("unexpecting node type!");
+            SemanticsError = true;
+            return nullptr;
+            break;
+        }
+    }else{
+        printf("unexpectedly found null node!");
+        SemanticsError = true;
+        return nullptr;
+    }
+    
+    return nullptr;
+}
+
+Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level){
     if (node)
     {
         switch (node->kind)
         {
         case ID:
+            {
+                if (auto ret = search_variable_symbol(get<string>(node->data),level,list)){
+                    
+                    VarUseOpt *newOp = new VarUseOpt();
+                    newOp->kind = ID;
+                    newOp -> type = getOptType(get<string>(node->data));
+                    return newOp;
+    
+                }else{
+                    printf("Undefined variable: %s",get<string>(node->data).c_str());
+                    SemanticsError = true;
+                    return nullptr;
+                }
+            }
+            break;
+        case INTEGER :case FLOAT: case CHAR:
+            {
+                StaticValueOpt *newOp = new StaticValueOpt();
+                newOp -> type = getOptType(get<string>(node->data));
+                newOp -> data = getStaticValue(node->data,newOp -> type);
+                return newOp;
+            }
+            break;
+        case NOT: case INCREASE: case DECREASE:
+            {
+                if (node->kind == NOT && prevKind == NOT)
+                {
+                    printf("unexpectedly found !! Statement");
+                    SemanticsError = true;
+                    return nullptr;
+                }
+                
+                RightOpt *newOp = new RightOpt();
+                newOp -> kind = node -> kind;
+                newOp -> right = readSimpleOpt(node->ptr[0],list,node -> kind,level); 
+                return newOp;
+            }
+        case COMPARE:
+            {
+                if (prevKind == COMPARE)
+                {
+                    printf("unexpectedly found Compare after Compare");
+                    SemanticsError = true;
+                    return nullptr;
+                }
+                
+                CompareOpt *newOp = new CompareOpt();
+                newOp -> kind = COMPARE;
+                newOp -> type = getCompareType(get<string>(node->data));
+                newOp -> left = readSimpleOpt(node->ptr[0],list,node -> kind,level); 
+                newOp -> right = readSimpleOpt(node->ptr[1],list,node -> kind,level); 
+                return newOp;
+            }
+            break;
+        case AND: case OR: case PLUS: case MINUS: case MULTI: case DIVID:
+            {
+                NormalOpt *newOp = new NormalOpt();
+                newOp -> kind = node -> kind;
+                newOp -> left = readSimpleOpt(node->ptr[0],list,node -> kind,level); 
+                newOp -> right = readSimpleOpt(node->ptr[1],list,node -> kind,level); 
+                return newOp;
+            }
+            break;
         default:
+            printf("unexpecting node type!");
+            SemanticsError = true;
             return nullptr;
             break;
         }
     }else{
+        printf("unexpectedly found null node!");
+        SemanticsError = true;
         return nullptr;
     }
     
@@ -659,4 +770,69 @@ void readVariables(ASTNode *node){
     funcIndex = 0;
     readVariablesGlobal(node,nullptr,0);
 
+}
+
+optType getOptType(string raw){
+    if (raw == "Int")
+    {
+        return Int;
+    }else if (raw == "Char")
+    {
+        return Char;
+    }else if (raw == "Float")
+    {
+        return Float;
+    }else{
+        return Void;
+    }
+    
+}
+
+compareType getCompareType(string raw){
+    if (raw == "==")
+    {
+        return Equal;
+    }else if (raw == "!=")
+    {
+        return NEqual;
+    }else if (raw == ">")
+    {
+        return Large;
+    }else if (raw == "<")
+    {
+        return Small;
+    }else if (raw == ">=")
+    {
+        return LargeEqual;
+    }else if (raw == "<=")
+    {
+        return SmallEqual;
+    }
+
+    return Equal;
+}
+
+variant<char,int,float> getStaticValue(variant<int,float,string,char> origin,optType type){
+    try
+    {
+        if (type == Int)
+        {
+            int value = get<int>(origin);
+            return value;
+        }else if(type == Float){
+            float value = get<float>(origin);
+            return value;
+        }else if(type == Char){
+            char value = get<char>(origin);
+            return value;
+        }else{
+            return 0;
+        }
+        
+    }
+    catch(std::bad_variant_access&)
+    {
+        return 0;
+    }
+    
 }

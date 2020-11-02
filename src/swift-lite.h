@@ -34,6 +34,14 @@ using std::string, std::unordered_map, std::vector, std::variant, std::shared_pt
 #define PRINT_AST 1
 #define PRINT_SYMBOL_TABLE 0
 
+enum optType{
+    Int,Char,Float,Void
+};
+
+enum compareType{
+    Equal,NEqual,Large,Small,LargeEqual,SmallEqual
+};
+
 class VariableList;
 class Block;
 
@@ -41,7 +49,6 @@ class Operation{
 public:
     int kind;
     int level;
-    variant<char,int,float> data;
     Operation *next;
     Operation();
 };
@@ -120,7 +127,7 @@ class Variable
 {
 public:
     string name;
-    string type;
+    optType type;
     variant<char,int,float> value;
     bool hasValue;
     Variable();
@@ -139,16 +146,42 @@ public:
 class DefineOpt : public Operation{
 public:
     vector<string> names;
-    string type;
+    optType type;
     DefineOpt();
 };
 
-class AssignOpt : public Operation{
+class NormalOpt : public Operation{
 public:
     Operation *left;
     Operation *right;
-    AssignOpt();
+    NormalOpt();
 };
+
+class CompareOpt : public NormalOpt{
+public:
+    compareType type;
+    CompareOpt();
+};
+
+class RightOpt : public Operation{
+public:
+    Operation *right;
+    RightOpt();
+};
+
+class VarUseOpt : public Operation{
+public:
+    optType type;
+    VarUseOpt();
+};
+
+class StaticValueOpt : public Operation{
+public:
+    optType type;
+    variant<char,int,float> data;
+    StaticValueOpt();
+};
+
 
 class FuncCallOpt : public Operation{
 public:
@@ -159,7 +192,7 @@ public:
 
 class ConditionOpt : public Operation{
 public:
-    int compareOpt;
+    compareType compareOpt;
     Operation *leftExp;
     Operation *rightExp;
     ConditionOpt();
