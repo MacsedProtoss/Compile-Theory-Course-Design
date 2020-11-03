@@ -193,9 +193,7 @@ public:
 
 class ConditionOpt : public Operation{
 public:
-    compareType compareOpt;
-    Operation *leftExp;
-    Operation *rightExp;
+    Operation *condition;
     ConditionOpt();
 };
 

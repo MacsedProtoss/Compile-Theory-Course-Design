@@ -12,7 +12,7 @@ RightOpt::RightOpt() : right(nullptr) {}
 VarUseOpt::VarUseOpt() : type(Void), name("") {}
 StaticValueOpt::StaticValueOpt() : type(Void), data(0) {}
 FuncCallOpt::FuncCallOpt() : func(nullptr),args({}) {}
-ConditionOpt::ConditionOpt() : compareOpt(Equal), leftExp(nullptr),rightExp(nullptr) {}
+ConditionOpt::ConditionOpt() : condition(nullptr) {}
 IfOpt::IfOpt() : condintion(nullptr),ifBlock(nullptr),elseBlock(nullptr) {}
 WhileOpt::WhileOpt() : condintion(nullptr),ifBlock(nullptr) {}
 
@@ -177,7 +177,7 @@ VariableNode::VariableNode() : type(Void) ,hasValue(false) {}
 
 static int funcIndex = 0;
 void readVariablesInBlock(Block *block,VariableList* father,string name);
-void readVariablesWithNode(ASTNode *node,VariableList *list,int level);
+Operation *readVariablesWithNode(ASTNode *node,VariableList *list,int level);
 Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,int level); // var a,b = 1, read var a,b
 Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level);// lExp = rExp, read rExp
 Operation *readAssignLeftOpt(ASTNode* node,VariableList* list,int level);// lExp = rExp, read lExp
@@ -495,74 +495,87 @@ Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,i
     return nullptr;
 }
 
-void readVariablesWithNode(ASTNode *node,VariableList *list,int level){
+Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
     if (node){
         switch(node -> kind){
             case IF_THEN:
                 {
-                    if (currentOperation ->kind == 0){
-                        currentOperation ->kind = IF_THEN;
-                        currentOperation ->level = level;
-                    }else{
-                        Operation *newOp = new Operation();
-                        newOp -> kind = IF_THEN;
-                        newOp -> level = level;
-                        currentOperation -> next = newOp;
-                        currentOperation = newOp;
-                    }
 
-                    for (int i = 0;i < 2;i++){
-                        readVariablesWithNode(node->ptr[i],nullptr,list,level);
-                    }
+                    IfOpt *newOp = new IfOpt();
+                    newOp -> kind = IF_THEN;
+                    newOp -> level = level;
+
+                    ConditionOpt *condition = new ConditionOpt();
+                    condition -> level = level;
+                    condition -> condition = readSimpleOpt(node->ptr[0],list,IF_THEN,level);
+
+                    newOp -> condintion = condition;
+                    
+                    Block *ifBlock = new Block();
+                    ifBlock -> EntryNode = node->ptr[1] -> ptr[0];
+                    
+                    readVariablesInBlock(ifBlock,list,"INFUNC_IF_THEN");
+
+                    newOp -> ifBlock = ifBlock;
+                    return newOp;
                 
                 }
                 
                 break;
             case IF_THEN_ELSE:
                 {
-                    if (currentOperation ->kind == 0){
-                        currentOperation ->kind = IF_THEN_ELSE;
-                        currentOperation ->level = level;
-                    }else{
-                        Operation *newOp = new Operation();
-                        newOp -> kind = IF_THEN_ELSE;
-                        newOp -> level = level;
-                        currentOperation -> next = newOp;
-                        currentOperation = newOp;
-                    }
 
-                    for (int i = 0;i < 3;i++){
-                        readVariablesWithNode(node->ptr[i],nullptr,list,level);
-                    }
+                    IfOpt *newOp = new IfOpt();
+                    newOp -> kind = IF_THEN_ELSE;
+                    newOp -> level = level;
+
+                    ConditionOpt *condition = new ConditionOpt();
+                    condition -> level = level;
+                    condition -> condition = readSimpleOpt(node->ptr[0],list,IF_THEN,level);
+
+                    newOp -> condintion = condition;
+                    
+                    Block *ifBlock = new Block();
+                    Block *elesBlock = new Block();
+                    ifBlock -> EntryNode = node->ptr[1] -> ptr[0];
+                    elesBlock -> EntryNode = node -> ptr[2] -> ptr[0];
+                    
+                    readVariablesInBlock(ifBlock,list,"INFUNC_IF_THEN_ELSE");
+                    readVariablesInBlock(elesBlock,list,"INFUNC_IF_THEN_ELSE");
+                    newOp -> ifBlock = ifBlock;
+                    newOp -> elseBlock = elesBlock;
+                    return newOp;
                 
                 }
                 break;
             case WHILE:
                 {
-                    if (currentOperation ->kind == 0){
-                        currentOperation ->kind = WHILE;
-                        currentOperation ->level = level;
-                    }else{
-                        Operation *newOp = new Operation();
-                        newOp -> kind = WHILE;
-                        newOp -> level = level;
-                        currentOperation -> next = newOp;
-                        currentOperation = newOp;
-                    }
 
-                    for (int i = 0;i < 2;i++){
-                        readVariablesWithNode(node->ptr[i],nullptr,list,level);
-                    }
+                    WhileOpt *newOp = new WhileOpt();
+                    newOp -> kind = WHILE;
+                    newOp -> level = level;
+
+                    ConditionOpt *condition = new ConditionOpt();
+                    condition -> level = level;
+                    condition -> condition = readSimpleOpt(node->ptr[0],list,IF_THEN,level);
+
+                    newOp -> condintion = condition;
+                    
+                    Block *ifBlock = new Block();
+                    ifBlock -> EntryNode = node->ptr[1] -> ptr[0];
+                    
+                    readVariablesInBlock(ifBlock,list,"INFUNC_WHILE");
+
+                    newOp -> ifBlock = ifBlock;
+                    return newOp;
                 
                 }
                 break;
             case WHOLE_STATEMENT:
                 {
-                    Block *block = new Block();
-                    block -> EntryNode = node;
-                    currentOperation -> blocks.push_back(block);
-                    block -> name = "INFUNC";
-                    readVariablesInBlock(block,list,"INFUNC");
+                    printf("unexpectedly found WHOLE STATEMENT which is not predicted！");
+                    SemanticsError = true;
+                    return nullptr;
                 }
                 break;
             case CONTINUE:
@@ -596,43 +609,15 @@ void readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                 }
                 break;
             case FUNC_CALL:
-                {
-                    if (currentOperation ->kind == 0){
-                        currentOperation -> kind = FUNC_CALL;
-                        currentOperation -> level = level;
-                    }else{
-                        Operation *newOp = new Operation();
-                        newOp -> kind = FUNC_CALL;
-                        newOp -> level = level;
-                        currentOperation -> next = newOp;
-                        currentOperation = newOp;
-                    }
-
-                    bool flag = false;
-                    FunctionNode *func = nullptr;
-                    for (int i = 0; i < funcIndex; i++){
-                        FunctionNode *funcNode = get_function_symbol(i);
-                        if (funcNode ->name == get<string>(node->data)){
-                            flag = true;
-                            func = funcNode;
-                            break;
-                        }
-                        
-                    }
-
-                    if (flag){
-                        checkParamters(node->ptr[0],func,list,level);
-                    }else{
-                        printf("Func not defined !");
-                        SemanticsError = true;
-                    }
-
-                }
+                
                 break;
             case Exp_STATMENT:
+                Operation *newOp = readSimpleOpt(node->ptr[0],list,STATEMENT_LIST,level);
+                //TODO: use newOp
                 break;
             case VAR_DEFINE:
-
+                Operation *newOp = readVarDefineOpt(node,nullptr,list,level);
+                //TODO : use newOp
                 break;
             case ASSIGN:
                 {
@@ -641,64 +626,16 @@ void readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     newOp -> kind = ASSIGN;
                     newOp -> left = readAssignLeftOpt(node->ptr[0],globalVars,level);
                     newOp -> right = readAssignRightOpt(node->ptr[1],globalVars,level);
-
-                    if (newOp -> left ->kind == VAR_DEFINE){
-                        VariableNode *vn = new VariableNode();
-                        vn -> level = level;
-                        vn ->hasValue = true;
-                        //TODO: vn assign type and name
-                    }
-
-                    if (entryOperation == nullptr){
-                        entryOperation = (Operation *)newOp;
-                        currentOperation = entryOperation;
-                    }else{
-                        currentOperation -> next = (Operation *)newOp;
-                        currentOperation = (Operation *)newOp;
-                    }
+                    return newOp;
                 }
                 break;
-            case AND:
-                
-                break;
-            case OR:
-                break;
-            case COMPARE:
-                break;
-            case PLUS:
-                break;
-            case MINUS:
-                break;
-            case MULTI:
-                break;
-            case DIVID:
-                break;
-            case NOT:
-                break;
-            case INCREASE:
-                break;
-            case DECREASE:
-                break;
-            case ID:
+            case AND: case OR: case NOT: case PLUS: case MINUS: case MULTI: case DIVID:
+            case COMPARE: case INCREASE: case DECREASE:
+            case INTEGER: case FLOAT: case CHAR: case ID:
                 {
-                    if (auto ret = search_variable_symbol(get<string>(node->data),level,list)){
-                        
-                        Operation *newOp = new Operation();
-                        newOp->kind = ID;
-                        newOp -> type = get<string>(node->data);
-                        currentOperation -> subOpts.push_back(newOp);
-        
-                    }else{
-                        printf("Undefined variable: %s",get<string>(node->data));
-                        SemanticsError = true;
-                    }
+                    Operation *newOp = readSimpleOpt(node,list,STATEMENT_LIST,level);
+                    //TODO: use newOp
                 }
-                break;
-            case INTEGER:
-                break;
-            case FLOAT:
-                break;
-            case CHAR:
                 break;
             default:
                 break;
@@ -713,12 +650,6 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
     list -> father = father;
     block ->varlist = list;
 
-    Operation *prevOpt = currentOperation;
-
-    Operation *newOp = new Operation();
-    block ->opt = newOp;
-    currentOperation = newOp;
-
     if (node){
 
         switch ( (node->kind))
@@ -731,11 +662,12 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
                 int index = 0;
                 ASTNode *temp = node;
                 while(temp){
-                    readVariablesWithNode(temp,nullptr,list,index);
+                    Operation *newOp = readVariablesWithNode(temp,list,index);
+
                     temp = temp->ptr[1];
                     index ++;
                 }
-                currentOperation = prevOpt;
+                
             }
 
             break;
