@@ -97,7 +97,7 @@ class Parameter
 public:
 
     string name;
-    string type;
+    optType type;
     Parameter();
 };
 
@@ -116,7 +116,7 @@ class FunctionNode
 public:
     string name;
     int level;
-    string return_type;
+    optType return_type;
     vector<Parameter*> parameters;
     Block *block;
 
@@ -172,6 +172,7 @@ public:
 class VarUseOpt : public Operation{
 public:
     optType type;
+    string name;
     VarUseOpt();
 };
 
@@ -186,7 +187,7 @@ public:
 class FuncCallOpt : public Operation{
 public:
     FunctionNode *func;
-    vector<variant<string,char,int,float>> args;
+    vector<variant<VarUseOpt*,StaticValueOpt*>> args;
     FuncCallOpt();
 };
 
