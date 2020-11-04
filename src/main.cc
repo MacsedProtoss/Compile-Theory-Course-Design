@@ -11,9 +11,6 @@ vector<int> symbol_scope_chain_stack;
 
 void entrypoint(ASTNode* node){
 
-    globalVars = new VariableList();
-    globalVars->namespacing = "global";
-
     SemanticsError = false;
 
     readFuncs(node,(FunctionNode *)nullptr);

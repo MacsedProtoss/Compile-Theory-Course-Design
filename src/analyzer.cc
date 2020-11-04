@@ -1,6 +1,8 @@
 #include "swift-lite.h"
 #include "stdio.h"
 
+VariableList *globalVars;
+
 FunctionNode::FunctionNode() : level(0), return_type(Void) {}
 Block::Block() : EntryNode(nullptr) ,name(""),opt(nullptr){}
 Parameter::Parameter() : type(Void) {}
@@ -219,11 +221,14 @@ void readVariablesGlobal(ASTNode* node,int level){
             case EXT_DEF_LIST:
                 {
                     ASTNode *temp = node;
-                    while(temp){                        
-                        readVariablesGlobal(temp,level+1);
+                    int l = level;
+                    while(temp){
+                        readVariablesGlobal(node->ptr[0],l);
                         temp = temp->ptr[1];
+                        l++;                  
                     }
                 }
+                break;
             case FUNCTION:
                 {
                     FunctionNode *func = get_function_symbol(funcIndex);
@@ -315,7 +320,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                     
                     VarUseOpt *newOp = new VarUseOpt();
                     newOp->kind = ID;
-                    newOp -> type = getOptType(get<string>(node->data));
+                    newOp -> type = getOptType(node->type);
                     newOp -> name = get<string>(node->data);
                     return newOp;
     
@@ -329,7 +334,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
         case INTEGER :case FLOAT: case CHAR:
             {
                 StaticValueOpt *newOp = new StaticValueOpt();
-                newOp -> type = getOptType(get<string>(node->data));
+                newOp -> type = getOptType(node->type);
                 newOp -> data = getStaticValue(node->data,newOp -> type);
                 return newOp;
             }
@@ -359,7 +364,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                 
                 CompareOpt *newOp = new CompareOpt();
                 newOp -> kind = COMPARE;
-                newOp -> type = getCompareType(get<string>(node->data));
+                newOp -> type = getCompareType(node->type);
                 newOp -> left = readSimpleOpt(node->ptr[0],list,node -> kind,level); 
                 newOp -> right = readSimpleOpt(node->ptr[1],list,node -> kind,level); 
                 return newOp;
@@ -463,7 +468,7 @@ Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,i
                     ASTNode *temp = node;
                     while(temp){
                         
-                        readVarDefineOpt(temp,var,list,level);
+                        readVarDefineOpt(temp->ptr[0],var,list,level);
                         temp = temp->ptr[1];
                     }
                 }
@@ -708,7 +713,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                         {
                             VarUseOpt *newOp = new VarUseOpt();
                             newOp->kind = ID;
-                            newOp -> type = getOptType(get<string>(node->data));
+                            newOp -> type = getOptType(node->type);
                             newOp -> name = get<string>(node->data);
                             funOpt -> args.push_back(newOp);
                         }else{
@@ -780,6 +785,8 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
 
 
 void readVaribales(ASTNode *node){
+    globalVars = new VariableList();
+    globalVars->namespacing = "global";
     funcIndex = 0;
     readVariablesGlobal(node,0);
 

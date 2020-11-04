@@ -230,7 +230,6 @@ void readVaribales(ASTNode *node);
 void insertVariable(Variable* var,VariableList *list,int line);
 
 
-static VariableList *globalVars;
 static bool SemanticsError;
 static Operation *entryOperation;
 static Operation *currentOperation;
