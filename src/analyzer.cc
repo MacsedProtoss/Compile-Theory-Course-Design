@@ -227,7 +227,7 @@ void readVariablesGlobal(ASTNode* node,int level){
                 {
                     FunctionNode *func = get_function_symbol(funcIndex);
 
-                    readVariablesInBlock(func->block,globalVars,func->name);
+                    readVariablesInBlock(func->block,func->block->varlist,func->name);
                     funcIndex++;
                 }
                 break;
@@ -580,44 +580,31 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                 break;
             case CONTINUE:
                 {
-                    if (currentOperation ->kind == 0){
-                        currentOperation -> kind = CONTINUE;
-                        currentOperation -> level = level;
-                    }else{
-                        Operation *newOp = new Operation();
-                        newOp -> kind = CONTINUE;
-                        newOp -> level = level;
-                        currentOperation -> next = newOp;
-                        currentOperation = newOp;
-                    }
+                    
+                    Operation *newOp = new Operation();
+                    newOp -> kind = CONTINUE;
+                    newOp -> level = level;
+                    
+                    return newOp;
+                    
                 }
                 break;
             case RETURN:
                 {
-                    if (currentOperation ->kind == 0){
-                        currentOperation -> kind = RETURN;
-                        currentOperation -> level = level;
-                    }else{
-                        Operation *newOp = new Operation();
-                        newOp -> kind = RETURN;
-                        newOp -> level = level;
-                        currentOperation -> next = newOp;
-                        currentOperation = newOp;
-                    }
-
-                    readVariablesWithNode(node->ptr[0],nullptr,list,level);
+                    RightOpt *newOp = new RightOpt();
+                    newOp -> kind = RETURN;
+                    newOp -> level = level;
+                    newOp -> right = readSimpleOpt(node->ptr[0],list,ASSIGN,level);
+                    return newOp;
                 }
-                break;
-            case FUNC_CALL:
-                
                 break;
             case Exp_STATMENT:
                 Operation *newOp = readSimpleOpt(node->ptr[0],list,STATEMENT_LIST,level);
-                //TODO: use newOp
+                return newOp;
                 break;
             case VAR_DEFINE:
                 Operation *newOp = readVarDefineOpt(node,nullptr,list,level);
-                //TODO : use newOp
+                return newOp;
                 break;
             case ASSIGN:
                 {
@@ -631,7 +618,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                 break;
             case AND: case OR: case NOT: case PLUS: case MINUS: case MULTI: case DIVID:
             case COMPARE: case INCREASE: case DECREASE:
-            case INTEGER: case FLOAT: case CHAR: case ID:
+            case INTEGER: case FLOAT: case CHAR: case ID: case FUNC_CALL:
                 {
                     Operation *newOp = readSimpleOpt(node,list,STATEMENT_LIST,level);
                     //TODO: use newOp
@@ -649,7 +636,8 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
     list ->namespacing = name;
     list -> father = father;
     block ->varlist = list;
-
+    block -> opt = nullptr;
+    Operation *tempOpt = nullptr;
     if (node){
 
         switch ( (node->kind))
@@ -663,7 +651,15 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
                 ASTNode *temp = node;
                 while(temp){
                     Operation *newOp = readVariablesWithNode(temp,list,index);
-
+                    if (block -> opt)
+                    {
+                        tempOpt -> next = newOp;
+                        tempOpt = newOp;
+                    }else{
+                        block -> opt = newOp;
+                        tempOpt = block -> opt;
+                    }
+                    
                     temp = temp->ptr[1];
                     index ++;
                 }
