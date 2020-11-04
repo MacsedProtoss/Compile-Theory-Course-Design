@@ -17,7 +17,7 @@ void entrypoint(ASTNode* node){
     SemanticsError = false;
 
     readFuncs(node,(FunctionNode *)nullptr);
-    // readVaribales(node);
+    readVaribales(node);
     return;
 }
 

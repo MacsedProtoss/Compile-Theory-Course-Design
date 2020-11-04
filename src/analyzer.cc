@@ -188,23 +188,18 @@ void readVariablesGlobal(ASTNode* node,int level){
         switch (node -> kind){
             case ASSIGN:
             {
-                VariableNode *vn = new VariableNode();
-                vn -> level = level;
-                vn ->hasValue = true;
                 
                 NormalOpt *newOp = new NormalOpt();
                 newOp -> kind = ASSIGN;
                 newOp -> left = readVarDefineOpt(node->ptr[0],nullptr,globalVars,level);
                 newOp -> right = readAssignRightOpt(node->ptr[1],globalVars,level);
 
-                //TODO: vn assign type and name
-
                 if (entryOperation == nullptr){
-                    entryOperation = (Operation *)newOp;
+                    entryOperation = newOp;
                     currentOperation = entryOperation;
                 }else{
-                    currentOperation -> next = (Operation *)newOp;
-                    currentOperation = (Operation *)newOp;
+                    currentOperation -> next = newOp;
+                    currentOperation = newOp;
                 }
             }
                 
@@ -212,7 +207,13 @@ void readVariablesGlobal(ASTNode* node,int level){
             case VAR_DEFINE:
                 {
                     Operation *newOp = readVarDefineOpt(node,nullptr,globalVars,level);
-                    //TODO: do something with newOp
+                    if (entryOperation == nullptr){
+                        entryOperation = newOp;
+                        currentOperation = entryOperation;
+                    }else{
+                        currentOperation -> next = newOp;
+                        currentOperation = newOp;
+                    }
                 }
                 break;
             case EXT_DEF_LIST:
@@ -599,12 +600,17 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                 }
                 break;
             case Exp_STATMENT:
-                Operation *newOp = readSimpleOpt(node->ptr[0],list,STATEMENT_LIST,level);
-                return newOp;
+                {
+                    Operation *newOp = readSimpleOpt(node->ptr[0],list,STATEMENT_LIST,level);
+                    return newOp;
+                }
+                
                 break;
             case VAR_DEFINE:
-                Operation *newOp = readVarDefineOpt(node,nullptr,list,level);
-                return newOp;
+                {
+                    Operation *newOp = readVarDefineOpt(node,nullptr,list,level);
+                    return newOp;
+                }
                 break;
             case ASSIGN:
                 {
@@ -773,7 +779,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
 }
 
 
-void readVariables(ASTNode *node){
+void readVaribales(ASTNode *node){
     funcIndex = 0;
     readVariablesGlobal(node,0);
 
