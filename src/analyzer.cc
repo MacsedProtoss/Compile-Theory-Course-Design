@@ -275,7 +275,7 @@ Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level){
             return nullptr;
         
         default:
-            printf("unexpecting node type!, at line %d\n",node -> pos);
+            printf("unexpecting node type at assign right of %d(enum), at line %d\n",node -> kind,node -> pos);
             SemanticsError = true;
             return nullptr;
             break;
@@ -296,7 +296,7 @@ Operation *readAssignLeftOpt(ASTNode* node,VariableList* list,int level){
         {
         case VAR_DEFINE:
             {
-                return readVarDefineOpt(node,nullptr,globalVars,level);
+                return readVarDefineOpt(node,nullptr,list,level);
             }
             break;
         case ID:
@@ -310,7 +310,7 @@ Operation *readAssignLeftOpt(ASTNode* node,VariableList* list,int level){
             return nullptr;
         
         default:
-            printf("unexpecting node type!, at line %d\n",node -> pos);
+            printf("unexpecting node type at assign left of %d(enum), at line %d\n",node -> kind,node -> pos);
             SemanticsError = true;
             return nullptr;
             break;
@@ -425,7 +425,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
             }
             break;
         default:
-            printf("unexpecting node type!, at line %d\n",node -> pos);
+            printf("unexpecting node type at simple opt of %d(enum), at line %d\n",node -> kind,node -> pos);
             SemanticsError = true;
             return nullptr;
             break;
@@ -467,7 +467,7 @@ Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,i
                         }
                         vars.push_back(variable);
                     }
-                    globalVars -> variables.insert(std::make_pair(level,vars));
+                    list -> variables.insert(std::make_pair(level,vars));
 
                     DefineOpt *newOp = new DefineOpt();
                     newOp -> kind = VAR_DEFINE;
@@ -638,8 +638,8 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                 
                     NormalOpt *newOp = new NormalOpt();
                     newOp -> kind = ASSIGN;
-                    newOp -> left = readAssignLeftOpt(node->ptr[0],globalVars,level);
-                    newOp -> right = readAssignRightOpt(node->ptr[1],globalVars,level);
+                    newOp -> left = readAssignLeftOpt(node->ptr[0],list,level);
+                    newOp -> right = readAssignRightOpt(node->ptr[1],list,level);
                     return newOp;
                 }
                 break;
