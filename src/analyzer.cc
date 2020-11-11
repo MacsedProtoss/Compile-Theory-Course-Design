@@ -223,7 +223,7 @@ void readVariablesGlobal(ASTNode* node,int level){
                     ASTNode *temp = node;
                     int l = level;
                     while(temp){
-                        readVariablesGlobal(node->ptr[0],l);
+                        readVariablesGlobal(temp->ptr[0],l);
                         temp = temp->ptr[1];
                         l++;                  
                     }
@@ -654,6 +654,30 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
         switch ( (node->kind))
         {
         
+        case WHOLE_STATEMENT:
+            {
+
+                int index = 0;
+                ASTNode *temp = node->ptr[0];
+                while(temp){
+                    Operation *newOp = readVariablesWithNode(temp->ptr[0],list,index);
+                    if (block -> opt)
+                    {
+                        tempOpt -> next = newOp;
+                        tempOpt = newOp;
+                    }else{
+                        block -> opt = newOp;
+                        tempOpt = block -> opt;
+                    }
+                    
+                    temp = temp->ptr[1];
+                    index ++;
+                }
+                
+            }
+
+            break;
+
         case STATEMENT_LIST:
             
             {
@@ -661,7 +685,7 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
                 int index = 0;
                 ASTNode *temp = node;
                 while(temp){
-                    Operation *newOp = readVariablesWithNode(temp,list,index);
+                    Operation *newOp = readVariablesWithNode(temp->ptr[0],list,index);
                     if (block -> opt)
                     {
                         tempOpt -> next = newOp;
