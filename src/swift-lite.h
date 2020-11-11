@@ -138,7 +138,7 @@ class VariableList
 public:
     VariableList *father;
     string namespacing;
-    std::unordered_map<int, Variable*> variables;
+    std::unordered_map<int, vector<Variable*>> variables;
 
     VariableList();
 };

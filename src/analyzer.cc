@@ -98,7 +98,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                 FunctionNode* p = get<FunctionNode*>(prev); 
                 Parameter *pa = new Parameter();
                 (p -> parameters).push_back(pa);
-                readSubFunctionNodes(node,pa,2);
+                readSubFunctionNodes(node,pa,2);    
             }catch (std::bad_variant_access&) {
                 printf("unexpectedly find func parameters outside functions\n");
                 SemanticsError = true;
@@ -138,6 +138,21 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
             {
                 FunctionNode *func = new FunctionNode();
                 readSubFunctionNodes(node,func,2);
+                func -> block -> varlist = new VariableList();
+                func -> block -> varlist -> father = globalVars;
+                func -> block -> varlist -> namespacing = func -> name;
+                vector<Variable *> vars;
+                for (int i = 0; i < func->parameters.size(); i++)
+                {
+                    Parameter *pa = func->parameters[i];
+                    string name = pa ->name;
+                    optType type = pa->type;
+                    Variable *variable = new Variable();
+                    variable -> name = name;
+                    variable -> type = type;
+                    vars.push_back(variable);
+                }
+                func -> block ->varlist->variables.insert(std::make_pair(-1,vars));
             }
             break;
         case EXT_DEF_LIST:
@@ -233,7 +248,7 @@ void readVariablesGlobal(ASTNode* node,int level){
                 {
                     FunctionNode *func = get_function_symbol(funcIndex);
 
-                    readVariablesInBlock(func->block,func->block->varlist,func->name);
+                    readVariablesInBlock(func->block,globalVars,func->name);
                     funcIndex++;
                 }
                 break;
@@ -439,6 +454,7 @@ Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,i
                         readVarDefineOpt(node->ptr[i],vn,list,level);
                     }
                     
+                    vector<Variable*> vars;
                     for (int i = 0; i < (vn->names).size(); i++)
                     {
                         string name = vn->names[i];
@@ -449,9 +465,9 @@ Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,i
                         if (vn -> hasValue){
                             variable ->value = vn -> data;
                         }
-                        globalVars -> variables.insert(std::make_pair(level,variable));
+                        vars.push_back(variable);
                     }
-
+                    globalVars -> variables.insert(std::make_pair(level,vars));
 
                     DefineOpt *newOp = new DefineOpt();
                     newOp -> kind = VAR_DEFINE;
@@ -645,10 +661,17 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
 
 void readVariablesInBlock(Block *block,VariableList* father,string name){
     ASTNode *node = block -> EntryNode;
-    VariableList *list = new VariableList();
-    list ->namespacing = name;
-    list -> father = father;
-    block ->varlist = list;
+    VariableList *list;
+    if (father == globalVars)
+    {
+        list = block -> varlist;
+    }else{
+        list = new VariableList();
+        list ->namespacing = name;
+        list -> father = father;
+        block -> varlist = list;
+    }
+    
     block -> opt = nullptr;
     Operation *tempOpt = nullptr;
     if (node){
