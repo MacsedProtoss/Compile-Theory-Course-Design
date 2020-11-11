@@ -38,7 +38,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                 FunctionNode* p = get<FunctionNode*>(prev);
                 readSubFunctionNodes(node,p,3);
             }catch (std::bad_variant_access&) {
-                printf("unexpectedly find func announce outside functions\n");
+                printf("unexpectedly find func announce outside functions, at line %d\n",node->pos);
                 SemanticsError = true;
             }}
             
@@ -52,7 +52,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                 block->name = p->name;
                 insertFunc(p->name,p);
             }catch (std::bad_variant_access&) {
-                printf("unexpectedly find whole statements outside functions\n");
+                printf("unexpectedly find whole statements outside functions, at line %d\n",node -> pos);
                 SemanticsError = true;
             } }
             break;
@@ -78,7 +78,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                 }
 
                 if (flag){
-                    printf("unexpectedly find ID\n");
+                    printf("unexpectedly find ID, at line %d\n",node -> pos);
                     SemanticsError = true;
                 }
 
@@ -100,7 +100,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                 (p -> parameters).push_back(pa);
                 readSubFunctionNodes(node,pa,2);    
             }catch (std::bad_variant_access&) {
-                printf("unexpectedly find func parameters outside functions\n");
+                printf("unexpectedly find func parameters outside functions, at line %d\n",node -> pos);
                 SemanticsError = true;
             }}
             break;
@@ -127,7 +127,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                 }
 
                 if (flag == 1){
-                    printf("unexpectedly find type\n");
+                    printf("unexpectedly find type, at line %d\n",node -> pos);
                     SemanticsError = true;
                 }
             
@@ -270,18 +270,18 @@ Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level){
             }
             break;
         case ASSIGN:
-            printf("unexpectedly find ASSIGN right of ASSIGN\n");
+            printf("unexpectedly find ASSIGN right of ASSIGN, at line %d\n",node -> pos);
             SemanticsError = true;
             return nullptr;
         
         default:
-            printf("unexpecting node type!\n");
+            printf("unexpecting node type!, at line %d\n",node -> pos);
             SemanticsError = true;
             return nullptr;
             break;
         }
     }else{
-        printf("unexpectedly found null node!\n");
+        printf("unexpectedly found null node!, at line %d\n",node -> pos);
         SemanticsError = true;
         return nullptr;
     }
@@ -305,18 +305,18 @@ Operation *readAssignLeftOpt(ASTNode* node,VariableList* list,int level){
             }
             break;
         case ASSIGN:
-            printf("unexpectedly find ASSIGN left of ASSIGN\n");
+            printf("unexpectedly find ASSIGN left of ASSIGN, at line %d\n",node -> pos);
             SemanticsError = true;
             return nullptr;
         
         default:
-            printf("unexpecting node type!\n");
+            printf("unexpecting node type!, at line %d\n",node -> pos);
             SemanticsError = true;
             return nullptr;
             break;
         }
     }else{
-        printf("unexpectedly found null node!\n");
+        printf("unexpectedly found null node!, at line %d\n",node -> pos);
         SemanticsError = true;
         return nullptr;
     }
@@ -340,7 +340,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                     return newOp;
     
                 }else{
-                    printf("Undefined variable: %s\n",get<string>(node->data).c_str());
+                    printf("Undefined variable: %s,at line %d\n",get<string>(node->data).c_str(),node->pos);
                     SemanticsError = true;
                     return nullptr;
                 }
@@ -358,7 +358,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
             {
                 if (node->kind == NOT && prevKind == NOT)
                 {
-                    printf("unexpectedly found !! Statement\n");
+                    printf("unexpectedly found !! Statement, at line %d\n",node -> pos);
                     SemanticsError = true;
                     return nullptr;
                 }
@@ -372,7 +372,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
             {
                 if (prevKind == COMPARE)
                 {
-                    printf("unexpectedly found Compare after Compare\n");
+                    printf("unexpectedly found Compare after Compare, at line %d\n",node -> pos);
                     SemanticsError = true;
                     return nullptr;
                 }
@@ -411,7 +411,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                 if (flag){
                     checkParamters(node->ptr[0],func,list,level);
                 }else{
-                    printf("Func not defined !\n");
+                    printf("Func not defined !, at line %d\n",node -> pos);
                     SemanticsError = true;
                     return nullptr;
                 }
@@ -425,13 +425,13 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
             }
             break;
         default:
-            printf("unexpecting node type!\n");
+            printf("unexpecting node type!, at line %d\n",node -> pos);
             SemanticsError = true;
             return nullptr;
             break;
         }
     }else{
-        printf("unexpectedly found null node!\n");
+        printf("unexpectedly found null node!, at line %d\n",node -> pos);
         SemanticsError = true;
         return nullptr;
     }
@@ -497,7 +497,7 @@ Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,i
                     }
                     catch(const std::exception& e)
                     {
-                        printf("unexpetedly find no ID in variable list\n");
+                        printf("unexpetedly find no ID in variable list, at line %d\n",node -> pos);
                         SemanticsError = true;
                     }
                     
@@ -595,7 +595,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                 break;
             case WHOLE_STATEMENT:
                 {
-                    printf("unexpectedly found WHOLE STATEMENT which is not predicted！\n");
+                    printf("unexpectedly found WHOLE STATEMENT which is not predicted！, at line %d\n",node -> pos);
                     SemanticsError = true;
                     return nullptr;
                 }
@@ -720,7 +720,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
     {
         if (temp == nullptr)
         {
-            printf("expecting arg count is %d, but found null at %d\n", func->parameters.size(),i+1);
+            printf("expecting arg count is %d, but found null at %uld,at line %d\n", func->parameters.size(),i+1,node -> pos);
             SemanticsError = true;
         }
 
@@ -728,7 +728,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
         ASTNode *arg = temp->ptr[0];
 
         if (arg == nullptr){
-            printf("expecting arg count is %d, but found null at %d\n", func->parameters.size(),i+1);
+            printf("expecting arg count is %d, but found null at %uld,at line %d\n", func->parameters.size(),i+1,node -> pos);
             SemanticsError = true;
             return;
         }else{
@@ -745,12 +745,12 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                             newOp -> name = get<string>(node->data);
                             funOpt -> args.push_back(newOp);
                         }else{
-                            printf("unexpected arg type at %d\n",i+1);
+                            printf("unexpected arg type at %d,at line %d\n",i+1,node -> pos);
                             SemanticsError = true;
                         }
         
                     }else{
-                        printf("can't find this arg ID at %d\n",i+1);
+                        printf("can't find this arg ID at %d,at line %d\n",i+1,node -> pos);
                         SemanticsError = true;
                     }
                 }
@@ -765,7 +765,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                         newOp -> data = get<int>(node->data);
                         funOpt -> args.push_back(newOp);
                     }else{
-                        printf("unexpected arg type at %d, expecting Int\n",i+1);
+                        printf("unexpected arg type at %d, expecting Int,at line %d\n",i+1,node -> pos);
                         SemanticsError = true;
                     }
                 }
@@ -779,7 +779,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                         newOp -> data = get<float>(node->data);
                         funOpt -> args.push_back(newOp);
                     }else{
-                        printf("unexpected arg type at %d, expecting Char\n",i+1);
+                        printf("unexpected arg type at %d, expecting Char, at line %d\n",i+1,node -> pos);
                         SemanticsError = true;
                     }
                 }
@@ -793,13 +793,13 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                         newOp -> data = get<char>(node->data);
                         funOpt -> args.push_back(newOp);
                     }else{
-                        printf("unexpected arg type at %d, expecting Float\n",i+1);
+                        printf("unexpected arg type at %d, expecting Float,at line %d\n",i+1,node -> pos);
                         SemanticsError = true;
                     }
                 }
                 break;
             default:
-                printf("unexpected arg type at %d\n",i+1);
+                printf("unexpected arg type at %d,at line %d\n",i+1,node -> pos);
                 SemanticsError = true;
                 break;
             }
