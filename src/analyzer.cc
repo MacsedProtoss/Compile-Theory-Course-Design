@@ -78,7 +78,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                 }
 
                 if (flag){
-                    printf("unexpectedly find ID");
+                    printf("unexpectedly find ID\n");
                     SemanticsError = true;
                 }
 
@@ -255,18 +255,18 @@ Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level){
             }
             break;
         case ASSIGN:
-            printf("unexpectedly find ASSIGN right of ASSIGN");
+            printf("unexpectedly find ASSIGN right of ASSIGN\n");
             SemanticsError = true;
             return nullptr;
         
         default:
-            printf("unexpecting node type!");
+            printf("unexpecting node type!\n");
             SemanticsError = true;
             return nullptr;
             break;
         }
     }else{
-        printf("unexpectedly found null node!");
+        printf("unexpectedly found null node!\n");
         SemanticsError = true;
         return nullptr;
     }
@@ -290,18 +290,18 @@ Operation *readAssignLeftOpt(ASTNode* node,VariableList* list,int level){
             }
             break;
         case ASSIGN:
-            printf("unexpectedly find ASSIGN left of ASSIGN");
+            printf("unexpectedly find ASSIGN left of ASSIGN\n");
             SemanticsError = true;
             return nullptr;
         
         default:
-            printf("unexpecting node type!");
+            printf("unexpecting node type!\n");
             SemanticsError = true;
             return nullptr;
             break;
         }
     }else{
-        printf("unexpectedly found null node!");
+        printf("unexpectedly found null node!\n");
         SemanticsError = true;
         return nullptr;
     }
@@ -325,7 +325,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                     return newOp;
     
                 }else{
-                    printf("Undefined variable: %s",get<string>(node->data).c_str());
+                    printf("Undefined variable: %s\n",get<string>(node->data).c_str());
                     SemanticsError = true;
                     return nullptr;
                 }
@@ -343,7 +343,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
             {
                 if (node->kind == NOT && prevKind == NOT)
                 {
-                    printf("unexpectedly found !! Statement");
+                    printf("unexpectedly found !! Statement\n");
                     SemanticsError = true;
                     return nullptr;
                 }
@@ -357,7 +357,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
             {
                 if (prevKind == COMPARE)
                 {
-                    printf("unexpectedly found Compare after Compare");
+                    printf("unexpectedly found Compare after Compare\n");
                     SemanticsError = true;
                     return nullptr;
                 }
@@ -396,7 +396,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                 if (flag){
                     checkParamters(node->ptr[0],func,list,level);
                 }else{
-                    printf("Func not defined !");
+                    printf("Func not defined !\n");
                     SemanticsError = true;
                     return nullptr;
                 }
@@ -410,13 +410,13 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
             }
             break;
         default:
-            printf("unexpecting node type!");
+            printf("unexpecting node type!\n");
             SemanticsError = true;
             return nullptr;
             break;
         }
     }else{
-        printf("unexpectedly found null node!");
+        printf("unexpectedly found null node!\n");
         SemanticsError = true;
         return nullptr;
     }
@@ -579,7 +579,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                 break;
             case WHOLE_STATEMENT:
                 {
-                    printf("unexpectedly found WHOLE STATEMENT which is not predicted！");
+                    printf("unexpectedly found WHOLE STATEMENT which is not predicted！\n");
                     SemanticsError = true;
                     return nullptr;
                 }
@@ -632,13 +632,15 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
             case INTEGER: case FLOAT: case CHAR: case ID: case FUNC_CALL:
                 {
                     Operation *newOp = readSimpleOpt(node,list,STATEMENT_LIST,level);
-                    //TODO: use newOp
+                    return newOp;
                 }
                 break;
             default:
+                return nullptr;
                 break;
         }
     }
+    return nullptr;
 }
 
 void readVariablesInBlock(Block *block,VariableList* father,string name){
@@ -661,13 +663,16 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
                 ASTNode *temp = node->ptr[0];
                 while(temp){
                     Operation *newOp = readVariablesWithNode(temp->ptr[0],list,index);
-                    if (block -> opt)
+                    if (newOp)
                     {
-                        tempOpt -> next = newOp;
-                        tempOpt = newOp;
-                    }else{
-                        block -> opt = newOp;
-                        tempOpt = block -> opt;
+                        if (block -> opt)
+                        {
+                            tempOpt -> next = newOp;
+                            tempOpt = newOp;
+                        }else{
+                            block -> opt = newOp;
+                            tempOpt = newOp;
+                        }
                     }
                     
                     temp = temp->ptr[1];
@@ -678,30 +683,6 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
 
             break;
 
-        case STATEMENT_LIST:
-            
-            {
-
-                int index = 0;
-                ASTNode *temp = node;
-                while(temp){
-                    Operation *newOp = readVariablesWithNode(temp->ptr[0],list,index);
-                    if (block -> opt)
-                    {
-                        tempOpt -> next = newOp;
-                        tempOpt = newOp;
-                    }else{
-                        block -> opt = newOp;
-                        tempOpt = block -> opt;
-                    }
-                    
-                    temp = temp->ptr[1];
-                    index ++;
-                }
-                
-            }
-
-            break;
         default:
             break;
         }
@@ -716,7 +697,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
     {
         if (temp == nullptr)
         {
-            printf("expecting arg count is %d, but found null at %d", func->parameters.size(),i+1);
+            printf("expecting arg count is %d, but found null at %d\n", func->parameters.size(),i+1);
             SemanticsError = true;
         }
 
@@ -724,7 +705,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
         ASTNode *arg = temp->ptr[0];
 
         if (arg == nullptr){
-            printf("expecting arg count is %d, but found null at %d", func->parameters.size(),i+1);
+            printf("expecting arg count is %d, but found null at %d\n", func->parameters.size(),i+1);
             SemanticsError = true;
             return;
         }else{
@@ -741,12 +722,12 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                             newOp -> name = get<string>(node->data);
                             funOpt -> args.push_back(newOp);
                         }else{
-                            printf("unexpected arg type at %d",i+1);
+                            printf("unexpected arg type at %d\n",i+1);
                             SemanticsError = true;
                         }
         
                     }else{
-                        printf("can't find this arg ID at %d",i+1);
+                        printf("can't find this arg ID at %d\n",i+1);
                         SemanticsError = true;
                     }
                 }
@@ -761,7 +742,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                         newOp -> data = get<int>(node->data);
                         funOpt -> args.push_back(newOp);
                     }else{
-                        printf("unexpected arg type at %d, expecting Int",i+1);
+                        printf("unexpected arg type at %d, expecting Int\n",i+1);
                         SemanticsError = true;
                     }
                 }
@@ -775,7 +756,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                         newOp -> data = get<float>(node->data);
                         funOpt -> args.push_back(newOp);
                     }else{
-                        printf("unexpected arg type at %d, expecting Char",i+1);
+                        printf("unexpected arg type at %d, expecting Char\n",i+1);
                         SemanticsError = true;
                     }
                 }
@@ -789,13 +770,13 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                         newOp -> data = get<char>(node->data);
                         funOpt -> args.push_back(newOp);
                     }else{
-                        printf("unexpected arg type at %d, expecting Float",i+1);
+                        printf("unexpected arg type at %d, expecting Float\n",i+1);
                         SemanticsError = true;
                     }
                 }
                 break;
             default:
-                printf("unexpected arg type at %d",i+1);
+                printf("unexpected arg type at %d\n",i+1);
                 SemanticsError = true;
                 break;
             }
