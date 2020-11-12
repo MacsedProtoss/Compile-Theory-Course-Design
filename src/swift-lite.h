@@ -50,6 +50,7 @@ class Operation{
 public:
     int kind;
     int level;
+    optType return_type;
     Operation *next;
     Operation();
 };

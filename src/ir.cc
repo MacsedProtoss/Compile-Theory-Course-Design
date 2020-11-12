@@ -76,12 +76,13 @@ void print_llvm_ir(Operation *head){
         case ASSIGN:
             {
                 //must be var define assign
+
                 NormalOpt *opt = (NormalOpt*) currentOpt;
                 auto gvars = buildGVarDefine(opt -> left);
                 for (int i = 0; i < gvars.size(); i++)
                 {
                     auto var = gvars[i];
-                    auto l = builder_stack.back().CreateLoad(var->getType(),nullptr,var->getName());
+                    auto l = builder_stack.back().CreateLoad(var);
                     auto v = ConstantInt::get(Type::getInt32Ty(TheContext), 1);
                     builder_stack.back().CreateStore(l,v);
                 }
@@ -212,3 +213,4 @@ void buildSimpleOpts(Operation *opt,BasicBlock *block){
     }
 }
 
+// variant<char,int,float> 

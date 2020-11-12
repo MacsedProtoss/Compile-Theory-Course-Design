@@ -16,7 +16,7 @@ VariableNode::VariableNode() : type(Void) ,hasValue(false) {}
 FunctionNode::FunctionNode() : level(0), return_type(Void) {}
 Block::Block() : EntryNode(nullptr) ,name(""),opt(nullptr){}
 Parameter::Parameter() : type(Void) {}
-Operation::Operation() : kind(0), level(0),next(nullptr){}
+Operation::Operation() : kind(0), level(0),next(nullptr),return_type(Void){}
 DefineOpt::DefineOpt() : names({}),type(Void) {}
 NormalOpt::NormalOpt() : left(nullptr),right(nullptr) {}
 CompareOpt::CompareOpt() : type(Equal) {}
@@ -225,6 +225,27 @@ void readVariablesGlobal(ASTNode* node,int level){
                 newOp -> left = readVarDefineOpt(node->ptr[0],nullptr,globalVars,level);
                 newOp -> right = readAssignRightOpt(node->ptr[1],globalVars,level,true);
 
+                if (newOp -> left ->return_type != newOp -> right -> return_type)
+                {
+                    if (newOp -> left -> return_type == Float && newOp -> right -> return_type == Int)
+                    {
+                        newOp -> return_type = Float;
+                    }else if (newOp -> left -> return_type == Int && newOp -> right ->return_type == Char)
+                    {
+                        newOp -> return_type = Int;
+                    }else if (newOp -> left -> return_type == Char && newOp -> right ->return_type == Int)
+                    {
+                        newOp -> return_type = Char;
+                    }else{
+                        printf("assign type conflict: left is %d(enum) , right is %d(enum) , at line %d\n",newOp->left->return_type,newOp->right->return_type,node -> pos);
+                        SemanticsError = true;
+                        return;
+                    }
+                    
+                }else{
+                    newOp -> return_type = newOp -> left -> return_type;
+                }
+
                 if (entryOperation == nullptr){
                     entryOperation = newOp;
                     currentOperation = entryOperation;
@@ -361,8 +382,9 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                     
                     VarUseOpt *newOp = new VarUseOpt();
                     newOp->kind = ID;
-                    newOp -> type = getOptType(node->type);
+                    newOp -> type = ret.value()->type;
                     newOp -> name = get<string>(node->data);
+                    newOp -> return_type = newOp -> type;
                     return newOp;
     
                 }else{
@@ -377,6 +399,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                 StaticValueOpt *newOp = new StaticValueOpt();
                 newOp -> type = getOptType(node->type);
                 newOp -> data = getStaticValue(node->data,newOp -> type);
+                newOp -> return_type = newOp -> type;
                 return newOp;
             }
             break;
@@ -391,7 +414,27 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                 
                 RightOpt *newOp = new RightOpt();
                 newOp -> kind = node -> kind;
-                newOp -> right = readSimpleOpt(node->ptr[0],list,node -> kind,level,isGlobal); 
+                newOp -> right = readSimpleOpt(node->ptr[0],list,node -> kind,level,isGlobal);
+                if (node -> kind == NOT)
+                {
+                    if (newOp ->right->return_type == Void)
+                    {
+                        printf("excuting NOT operation to Void type is not accepted, at line %d\n",node -> pos);
+                        SemanticsError = true;
+                        return nullptr;
+                    }
+                    
+                }else{
+                    if (newOp ->right->return_type != Int)
+                    {
+                        printf("INCREASE/DECREASE can only be applied to Int, at line %d\n",node -> pos);
+                        SemanticsError = true;
+                        return nullptr;
+                    }
+                    
+                }
+                
+                newOp -> return_type = Int;
                 return newOp;
             }
         case COMPARE:
@@ -408,6 +451,13 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                 newOp -> type = getCompareType(node->type);
                 newOp -> left = readSimpleOpt(node->ptr[0],list,node -> kind,level,isGlobal); 
                 newOp -> right = readSimpleOpt(node->ptr[1],list,node -> kind,level,isGlobal); 
+                if (newOp -> left -> return_type == Void || newOp -> right -> return_type == Void)
+                {
+                    printf("trying to excute conditions between Void type is not accepted, at line %d\n",node -> pos);
+                    SemanticsError = true;
+                    return nullptr;
+                }
+                newOp -> return_type = Int;
                 return newOp;
             }
             break;
@@ -417,6 +467,32 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                 newOp -> kind = node -> kind;
                 newOp -> left = readSimpleOpt(node->ptr[0],list,node -> kind,level,isGlobal); 
                 newOp -> right = readSimpleOpt(node->ptr[1],list,node -> kind,level,isGlobal); 
+                if (node -> kind == AND || node -> kind == OR)
+                {
+                    if (newOp -> left -> return_type == Void || newOp -> right -> return_type == Void)
+                    {
+                        printf("trying to excute conditions between Void type is not accepted, at line %d\n",node -> pos);
+                        SemanticsError = true;
+                        return nullptr;
+                    }
+                    
+                    newOp -> return_type = Int;
+                }else{
+                    if (newOp -> left -> return_type != newOp -> right -> return_type)
+                    {
+                        if (newOp -> left -> return_type == Char || newOp -> right -> return_type == Char || newOp -> left -> return_type == Void || newOp -> right -> return_type == Void)
+                        {
+                            printf("conflict types, at line %d\n",node -> pos);
+                            SemanticsError = true;
+                            return nullptr;
+                        }
+
+                        newOp -> return_type = Float;
+                    }else{
+                        newOp -> return_type = newOp -> left -> return_type;
+                    }
+                    
+                }
                 return newOp;
             }
             break;
@@ -446,6 +522,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                 newOp -> kind = node -> kind;
                 newOp -> func = func;
                 newOp -> level = level;
+                newOp -> return_type = func -> return_type;
                 return newOp;
                 
             }
@@ -512,7 +589,7 @@ Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,i
                     newOp ->level = vn -> level;
                     newOp ->type = vn -> type;
                     newOp -> names = vn -> names;
-
+                    newOp -> return_type = newOp -> type;
                     return (Operation *)newOp;
                     
                 }
@@ -568,7 +645,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     ConditionOpt *condition = new ConditionOpt();
                     condition -> level = level;
                     condition -> condition = readSimpleOpt(node->ptr[0],list,IF_THEN,level,false);
-
+                    
                     newOp -> condintion = condition;
                     
                     Block *ifBlock = new Block();
@@ -650,7 +727,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     Operation *newOp = new Operation();
                     newOp -> kind = node -> kind;
                     newOp -> level = level;
-                    
+                    newOp -> return_type = Void;
                     return newOp;
                     
                 }
@@ -661,6 +738,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     newOp -> kind = RETURN;
                     newOp -> level = level;
                     newOp -> right = readSimpleOpt(node->ptr[0],list,ASSIGN,level,false);
+                    newOp -> return_type = newOp -> right -> return_type;
                     return newOp;
                 }
                 break;
@@ -684,6 +762,26 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     newOp -> kind = ASSIGN;
                     newOp -> left = readAssignLeftOpt(node->ptr[0],list,level);
                     newOp -> right = readAssignRightOpt(node->ptr[1],list,level,false);
+                    if (newOp -> left ->return_type != newOp -> right -> return_type)
+                    {
+                        if (newOp -> left -> return_type == Float && newOp -> right -> return_type == Int)
+                        {
+                            newOp -> return_type = Float;
+                        }else if (newOp -> left -> return_type == Int && newOp -> right ->return_type == Char)
+                        {
+                            newOp -> return_type = Int;
+                        }else if (newOp -> left -> return_type == Char && newOp -> right ->return_type == Int)
+                        {
+                            newOp -> return_type = Char;
+                        }else{
+                            printf("assign type conflict: left is %d(enum) , right is %d(enum) , at line %d\n",newOp -> left ->return_type,newOp->right->return_type,node -> pos);
+                            SemanticsError = true;
+                            return nullptr;
+                        }
+                        
+                    }else{
+                        newOp -> return_type = newOp -> left -> return_type;
+                    }
                     return newOp;
                 }
                 break;
@@ -764,7 +862,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
     {
         if (temp == nullptr)
         {
-            printf("expecting arg count is %lud, but found null at %lud,at line %d\n", func->parameters.size(),i+1,node -> pos);
+            printf("expecting arg count is %lud, but found null at %d,at line %d\n", func->parameters.size(),i+1,node -> pos);
             SemanticsError = true;
         }
 
@@ -772,7 +870,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
         ASTNode *arg = temp->ptr[0];
 
         if (arg == nullptr){
-            printf("expecting arg count is %lud, but found null at %lud,at line %d\n", func->parameters.size(),i+1,node -> pos);
+            printf("expecting arg count is %lud, but found null at %d,at line %d\n", func->parameters.size(),i+1,node -> pos);
             SemanticsError = true;
             return;
         }else{
@@ -781,16 +879,32 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
             case ID:
                 {
                     if (auto ret = search_variable_symbol(get<string>(node->data),level,list)){
+                        VarUseOpt *newOp = new VarUseOpt();
+                        newOp->kind = ID;
+                        newOp -> type = ret.value()->type;
+                        newOp -> name = get<string>(node->data);
                         if (param->type == ret.value()->type)
                         {
-                            VarUseOpt *newOp = new VarUseOpt();
-                            newOp->kind = ID;
-                            newOp -> type = getOptType(node->type);
-                            newOp -> name = get<string>(node->data);
+                            newOp -> return_type = newOp -> type;
                             funOpt -> args.push_back(newOp);
                         }else{
-                            printf("unexpected arg type at %d,at line %d\n",i+1,node -> pos);
-                            SemanticsError = true;
+                            if (param -> type == Float && ret.value()->type == Int)
+                            {
+                                newOp -> return_type = Float;
+                                funOpt -> args.push_back(newOp);
+                            }else if (param -> type == Int && ret.value()->type == Char)
+                            {
+                                newOp -> return_type = Int;
+                                funOpt -> args.push_back(newOp);
+                            }else if (param -> type == Char && ret.value()->type == Int)
+                            {
+                                newOp -> return_type = Char;
+                                funOpt -> args.push_back(newOp);
+                            }else{
+                                printf("unexpected arg type at %d,at line %d\n",i+1,node -> pos);
+                                SemanticsError = true;
+                                return;
+                            }
                         }
         
                     }else{
@@ -802,10 +916,11 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                 break;
             case INTEGER:
                 {
-                    if (param->type == Int)
+                    if (param->type == Int || param -> type == Float || param -> type == Void)
                     {
                         StaticValueOpt *newOp = new StaticValueOpt();
                         newOp->kind = INTEGER;
+                        newOp -> return_type = Int;
                         newOp -> data = get<int>(node->data);
                         funOpt -> args.push_back(newOp);
                     }else{
@@ -819,7 +934,8 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                     if (param->type == Float)
                     {
                         StaticValueOpt *newOp = new StaticValueOpt();
-                        newOp->kind = INTEGER;
+                        newOp->kind = FLOAT;
+                        newOp -> return_type = Float;
                         newOp -> data = get<float>(node->data);
                         funOpt -> args.push_back(newOp);
                     }else{
@@ -830,10 +946,11 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                 break;
             case CHAR:
                 {
-                    if (param->type == Char)
+                    if (param->type == Char || param -> type == Int)
                     {
                         StaticValueOpt *newOp = new StaticValueOpt();
-                        newOp->kind = INTEGER;
+                        newOp->kind = CHAR;
+                        newOp -> return_type = Char;
                         newOp -> data = get<char>(node->data);
                         funOpt -> args.push_back(newOp);
                     }else{
