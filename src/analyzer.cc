@@ -13,6 +13,22 @@ public:
 };
 VariableNode::VariableNode() : type(Void) ,hasValue(false) {}
 
+FunctionNode::FunctionNode() : level(0), return_type(Void) {}
+Block::Block() : EntryNode(nullptr) ,name(""),opt(nullptr){}
+Parameter::Parameter() : type(Void) {}
+Operation::Operation() : kind(0), level(0),next(nullptr){}
+DefineOpt::DefineOpt() : names({}),type(Void) {}
+NormalOpt::NormalOpt() : left(nullptr),right(nullptr) {}
+CompareOpt::CompareOpt() : type(Equal) {}
+RightOpt::RightOpt() : right(nullptr) {}
+VarUseOpt::VarUseOpt() : type(Void), name("") {}
+StaticValueOpt::StaticValueOpt() : type(Void), data(0) {}
+FuncCallOpt::FuncCallOpt() : func(nullptr),args({}) {}
+ConditionOpt::ConditionOpt() : condition(nullptr) {}
+IfOpt::IfOpt() : condintion(nullptr),ifBlock(nullptr),elseBlock(nullptr) {}
+WhileOpt::WhileOpt() : condintion(nullptr),ifBlock(nullptr) {}
+
+
 VariableList *globalVars;
 int funcIndex = 0;
 bool SemanticsError = false;
@@ -21,9 +37,9 @@ Operation *currentOperation;
 
 Operation *readVariablesWithNode(ASTNode *node,VariableList *list,int level);
 Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,int level); // var a,b = 1, read var a,b
-Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level);// lExp = rExp, read rExp
+Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level,bool isGlobal);// lExp = rExp, read rExp
 Operation *readAssignLeftOpt(ASTNode* node,VariableList* list,int level);// lExp = rExp, read lExp
-Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level);// a > b , !b , a != b , read a & b
+Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level,bool isGlobal);// a > b , !b , a != b , read a & b
 
 void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
 void readSubFunctionNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count);
@@ -163,7 +179,7 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                         Variable* var = vars[j];
                         if (var->name == variable -> name)
                         {
-                            printf("unexpectedly find conflict arg (args[%d]) with ID:%s, at line %d\n",j,variable->name,node -> pos);
+                            printf("unexpectedly find conflict arg (args[%d]) with ID:%s, at line %d\n",j,variable->name.c_str(),node -> pos);
                             SemanticsError = true;
                         }
                         
@@ -207,7 +223,7 @@ void readVariablesGlobal(ASTNode* node,int level){
                 NormalOpt *newOp = new NormalOpt();
                 newOp -> kind = ASSIGN;
                 newOp -> left = readVarDefineOpt(node->ptr[0],nullptr,globalVars,level);
-                newOp -> right = readAssignRightOpt(node->ptr[1],globalVars,level);
+                newOp -> right = readAssignRightOpt(node->ptr[1],globalVars,level,true);
 
                 if (entryOperation == nullptr){
                     entryOperation = newOp;
@@ -257,14 +273,20 @@ void readVariablesGlobal(ASTNode* node,int level){
     }
 }
 
-Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level){
+Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level,bool isGlobal){
     if (node)
     {
         switch (node->kind)
         {
         case ID: case INTEGER :case FLOAT: case CHAR: case COMPARE: case AND: case OR: case PLUS: case MINUS: case MULTI: case DIVID: case FUNC_CALL:
             {
-                return readSimpleOpt(node,list,ASSIGN,level);
+                if (isGlobal && node->kind == ID)
+                {
+                    printf("initializer element is not constant, at line %d\n",node -> pos);
+                    SemanticsError = true;
+                    return nullptr;
+                }
+                return readSimpleOpt(node,list,ASSIGN,level,isGlobal);
             }
             break;
         case ASSIGN:
@@ -299,7 +321,7 @@ Operation *readAssignLeftOpt(ASTNode* node,VariableList* list,int level){
             break;
         case ID:
             {
-                return readSimpleOpt(node,list,ASSIGN,level);
+                return readSimpleOpt(node,list,ASSIGN,level,false);
             }
             break;
         case ASSIGN:
@@ -322,13 +344,19 @@ Operation *readAssignLeftOpt(ASTNode* node,VariableList* list,int level){
     return nullptr;
 }
 
-Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level){
+Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level,bool isGlobal){
     if (node)
     {
         switch (node->kind)
         {
         case ID:
             {
+                if (isGlobal)
+                {
+                    printf("initializer element is not constant, at line %d\n",node -> pos);
+                    SemanticsError = true;
+                    return nullptr;
+                }
                 if (auto ret = search_variable_symbol(get<string>(node->data),level,list)){
                     
                     VarUseOpt *newOp = new VarUseOpt();
@@ -363,7 +391,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                 
                 RightOpt *newOp = new RightOpt();
                 newOp -> kind = node -> kind;
-                newOp -> right = readSimpleOpt(node->ptr[0],list,node -> kind,level); 
+                newOp -> right = readSimpleOpt(node->ptr[0],list,node -> kind,level,isGlobal); 
                 return newOp;
             }
         case COMPARE:
@@ -378,8 +406,8 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                 CompareOpt *newOp = new CompareOpt();
                 newOp -> kind = COMPARE;
                 newOp -> type = getCompareType(node->type);
-                newOp -> left = readSimpleOpt(node->ptr[0],list,node -> kind,level); 
-                newOp -> right = readSimpleOpt(node->ptr[1],list,node -> kind,level); 
+                newOp -> left = readSimpleOpt(node->ptr[0],list,node -> kind,level,isGlobal); 
+                newOp -> right = readSimpleOpt(node->ptr[1],list,node -> kind,level,isGlobal); 
                 return newOp;
             }
             break;
@@ -387,8 +415,8 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
             {
                 NormalOpt *newOp = new NormalOpt();
                 newOp -> kind = node -> kind;
-                newOp -> left = readSimpleOpt(node->ptr[0],list,node -> kind,level); 
-                newOp -> right = readSimpleOpt(node->ptr[1],list,node -> kind,level); 
+                newOp -> left = readSimpleOpt(node->ptr[0],list,node -> kind,level,isGlobal); 
+                newOp -> right = readSimpleOpt(node->ptr[1],list,node -> kind,level,isGlobal); 
                 return newOp;
             }
             break;
@@ -469,7 +497,7 @@ Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,i
                             Variable* var = vars[j];
                             if (var->name == variable -> name)
                             {
-                                printf("unexpectedly find conflict arg (args[%d]) with ID:%s, at line %d\n",j,variable->name,node -> pos);
+                                printf("unexpectedly find conflict arg (args[%d]) with ID:%s, at line %d\n",j,variable->name.c_str(),node -> pos);
                                 SemanticsError = true;
                             }
                             
@@ -539,7 +567,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
 
                     ConditionOpt *condition = new ConditionOpt();
                     condition -> level = level;
-                    condition -> condition = readSimpleOpt(node->ptr[0],list,IF_THEN,level);
+                    condition -> condition = readSimpleOpt(node->ptr[0],list,IF_THEN,level,false);
 
                     newOp -> condintion = condition;
                     
@@ -563,7 +591,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
 
                     ConditionOpt *condition = new ConditionOpt();
                     condition -> level = level;
-                    condition -> condition = readSimpleOpt(node->ptr[0],list,IF_THEN,level);
+                    condition -> condition = readSimpleOpt(node->ptr[0],list,IF_THEN,level,false);
 
                     newOp -> condintion = condition;
                     
@@ -589,7 +617,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
 
                     ConditionOpt *condition = new ConditionOpt();
                     condition -> level = level;
-                    condition -> condition = readSimpleOpt(node->ptr[0],list,IF_THEN,level);
+                    condition -> condition = readSimpleOpt(node->ptr[0],list,IF_THEN,level,false);
 
                     newOp -> condintion = condition;
                     
@@ -632,13 +660,13 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     RightOpt *newOp = new RightOpt();
                     newOp -> kind = RETURN;
                     newOp -> level = level;
-                    newOp -> right = readSimpleOpt(node->ptr[0],list,ASSIGN,level);
+                    newOp -> right = readSimpleOpt(node->ptr[0],list,ASSIGN,level,false);
                     return newOp;
                 }
                 break;
             case Exp_STATMENT:
                 {
-                    Operation *newOp = readSimpleOpt(node->ptr[0],list,STATEMENT_LIST,level);
+                    Operation *newOp = readSimpleOpt(node->ptr[0],list,STATEMENT_LIST,level,false);
                     return newOp;
                 }
                 
@@ -655,7 +683,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     NormalOpt *newOp = new NormalOpt();
                     newOp -> kind = ASSIGN;
                     newOp -> left = readAssignLeftOpt(node->ptr[0],list,level);
-                    newOp -> right = readAssignRightOpt(node->ptr[1],list,level);
+                    newOp -> right = readAssignRightOpt(node->ptr[1],list,level,false);
                     return newOp;
                 }
                 break;
@@ -663,7 +691,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
             case COMPARE: case INCREASE: case DECREASE:
             case INTEGER: case FLOAT: case CHAR: case ID: case FUNC_CALL:
                 {
-                    Operation *newOp = readSimpleOpt(node,list,STATEMENT_LIST,level);
+                    Operation *newOp = readSimpleOpt(node,list,STATEMENT_LIST,level,false);
                     return newOp;
                 }
                 break;
@@ -736,7 +764,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
     {
         if (temp == nullptr)
         {
-            printf("expecting arg count is %d, but found null at %uld,at line %d\n", func->parameters.size(),i+1,node -> pos);
+            printf("expecting arg count is %lud, but found null at %lud,at line %d\n", func->parameters.size(),i+1,node -> pos);
             SemanticsError = true;
         }
 
@@ -744,7 +772,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
         ASTNode *arg = temp->ptr[0];
 
         if (arg == nullptr){
-            printf("expecting arg count is %d, but found null at %uld,at line %d\n", func->parameters.size(),i+1,node -> pos);
+            printf("expecting arg count is %lud, but found null at %lud,at line %d\n", func->parameters.size(),i+1,node -> pos);
             SemanticsError = true;
             return;
         }else{

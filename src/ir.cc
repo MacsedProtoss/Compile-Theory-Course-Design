@@ -21,28 +21,32 @@ typedef tuple<Instruction *, Value *, string, string> DeferredBrStatementType;
 
 unordered_map<string, vector<Instruction *>> deferred_goto_statement;
 list<DeferredBrStatementType> deferred_br_statement;
-void buildVarDefine(Operation *opt);
-
-auto create_goto = [&](const string &label) -> void {
-    auto *current_basic_block = block_stack.back();
-    if (finished_block.count(current_basic_block))
-        return;
-    finished_block.insert(current_basic_block);
-
-    if (label_table.count(label))
-    {
-        builder_stack.back().CreateBr(label_table[label]);
-    }
-    else
-    {
-        Instruction *fake_node = builder_stack.back().CreateRetVoid();
-        deferred_goto_statement[label].emplace_back(fake_node);
-    }
-};
+vector<GlobalVariable*> buildGVarDefine(Operation *opt);
+void buildVarDefine(Operation *opt,BasicBlock *block);
+void buildSimpleOpts(Operation *opt,BasicBlock *block);
 
 ConstantInt* const_int_val = ConstantInt::get(TheContext, APInt(32,0));
 ConstantInt* const_char_val = ConstantInt::get(TheContext, APInt(32,0));
 ConstantFP* const_float_val = ConstantFP::get(TheContext, APFloat(0.0));
+
+// auto create_goto = [&](const string &label) -> void {
+//     auto *current_basic_block = block_stack.back();
+//     if (finished_block.count(current_basic_block))
+//         return;
+//     finished_block.insert(current_basic_block);
+
+//     if (label_table.count(label))
+//     {
+//         builder_stack.back().CreateBr(label_table[label]);
+//     }
+//     else
+//     {
+//         Instruction *fake_node = builder_stack.back().CreateRetVoid();
+//         deferred_goto_statement[label].emplace_back(fake_node);
+//     }
+// };
+
+
 
 // extern vector<Symbol> symbol_table;
 
@@ -70,8 +74,20 @@ void print_llvm_ir(Operation *head){
         switch (currentOpt -> kind)
         {
         case ASSIGN:
-            //must be var define assign
-
+            {
+                //must be var define assign
+                NormalOpt *opt = (NormalOpt*) currentOpt;
+                auto gvars = buildGVarDefine(opt -> left);
+                for (int i = 0; i < gvars.size(); i++)
+                {
+                    auto var = gvars[i];
+                    auto l = builder_stack.back().CreateLoad(var->getType(),nullptr,var->getName());
+                    auto v = ConstantInt::get(Type::getInt32Ty(TheContext), 1);
+                    builder_stack.back().CreateStore(l,v);
+                }
+                
+                
+            }
             break;
         case VAR_DEFINE:
             break;
@@ -96,8 +112,9 @@ void print_llvm_ir(Operation *head){
 
 }
 
-void buildGVarDefine(Operation *opt){
+vector<GlobalVariable*> buildGVarDefine(Operation *opt){
     DefineOpt *defineOpt = (DefineOpt*)opt;
+    vector<GlobalVariable*> vars;
     for (int i = 0; i < defineOpt ->names.size(); i++)
     {
         string name = defineOpt -> names[i];
@@ -106,16 +123,19 @@ void buildGVarDefine(Operation *opt){
         case Int:
             {
                 GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getInt32Ty(TheContext),false,GlobalVariable::ExternalLinkage,const_int_val,name);
+                vars.push_back(newGVar);
             }
             break;
         case Char:
             {
                 GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getInt32Ty(TheContext),false,GlobalVariable::ExternalLinkage,const_char_val,name);
+                vars.push_back(newGVar);
             }
             break;
         case Float:
             {
                 GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getFloatTy(TheContext),false,GlobalVariable::ExternalLinkage,const_float_val,name);
+                vars.push_back(newGVar);
             }
             break;
         default:
@@ -123,6 +143,7 @@ void buildGVarDefine(Operation *opt){
         }
     }
     
+    return vars;
 }
 
 void buildVarDefine(Operation *opt,BasicBlock *block){
@@ -153,5 +174,41 @@ void buildVarDefine(Operation *opt,BasicBlock *block){
         }
     }
     
+}
+
+void buildSimpleOpts(Operation *opt,BasicBlock *block){
+    switch (opt->kind)
+    {
+    case ID:
+        
+        break;
+    case INTEGER :case FLOAT: case CHAR:
+
+    case NOT: 
+    
+    case INCREASE: 
+    
+    case DECREASE:
+
+    case COMPARE:
+
+    case AND: 
+
+    case OR: 
+
+    case PLUS: 
+
+    case MINUS: 
+
+    case MULTI: 
+
+    case DIVID:
+
+    case FUNC_CALL:
+
+
+    default:
+        break;
+    }
 }
 

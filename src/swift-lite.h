@@ -213,21 +213,6 @@ public:
     WhileOpt();
 };
 
-FunctionNode::FunctionNode() : level(0), return_type(Void) {}
-Block::Block() : EntryNode(nullptr) ,name(""),opt(nullptr){}
-Parameter::Parameter() : type(Void) {}
-Operation::Operation() : kind(0), level(0),next(nullptr){}
-DefineOpt::DefineOpt() : names({}),type(Void) {}
-NormalOpt::NormalOpt() : left(nullptr),right(nullptr) {}
-CompareOpt::CompareOpt() : type(Equal) {}
-RightOpt::RightOpt() : right(nullptr) {}
-VarUseOpt::VarUseOpt() : type(Void), name("") {}
-StaticValueOpt::StaticValueOpt() : type(Void), data(0) {}
-FuncCallOpt::FuncCallOpt() : func(nullptr),args({}) {}
-ConditionOpt::ConditionOpt() : condition(nullptr) {}
-IfOpt::IfOpt() : condintion(nullptr),ifBlock(nullptr),elseBlock(nullptr) {}
-WhileOpt::WhileOpt() : condintion(nullptr),ifBlock(nullptr) {}
-
 
 ASTNode *make_node(int kind, int pos, vector<ASTNode *> nodes = vector<ASTNode *>{});
 void entrypoint(ASTNode *node);
