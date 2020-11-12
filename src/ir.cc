@@ -104,13 +104,19 @@ void buildGVarDefine(Operation *opt){
         switch (defineOpt ->type)
         {
         case Int:
-            GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getInt32Ty(TheContext),false,GlobalVariable::ExternalLinkage,const_int_val,name);
+            {
+                GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getInt32Ty(TheContext),false,GlobalVariable::ExternalLinkage,const_int_val,name);
+            }
             break;
         case Char:
-            GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getInt32Ty(TheContext),false,GlobalVariable::ExternalLinkage,const_char_val,name);
+            {
+                GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getInt32Ty(TheContext),false,GlobalVariable::ExternalLinkage,const_char_val,name);
+            }
             break;
         case Float:
-            GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getFloatTy(TheContext),false,GlobalVariable::ExternalLinkage,const_float_val,name);
+            {
+                GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getFloatTy(TheContext),false,GlobalVariable::ExternalLinkage,const_float_val,name);
+            }
             break;
         default:
             break;
@@ -119,7 +125,7 @@ void buildGVarDefine(Operation *opt){
     
 }
 
-void buildVarDefine(Operation *opt){
+void buildVarDefine(Operation *opt,BasicBlock *block){
     DefineOpt *defineOpt = (DefineOpt*)opt;
     for (int i = 0; i < defineOpt ->names.size(); i++)
     {
@@ -127,13 +133,20 @@ void buildVarDefine(Operation *opt){
         switch (defineOpt ->type)
         {
         case Int:
-            GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getInt32Ty(TheContext),false,GlobalVariable::ExternalLinkage,const_int_val,name);
+            {
+                auto AI = new AllocaInst(Type::getInt32Ty(TheContext),0,name,block);
+            }
+            
             break;
         case Char:
-            GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getInt32Ty(TheContext),false,GlobalVariable::ExternalLinkage,const_char_val,name);
+            {
+                auto AI = new AllocaInst(Type::getInt32Ty(TheContext),0,name,block);
+            }
             break;
         case Float:
-            GlobalVariable *newGVar = new GlobalVariable(TheModule,Type::getFloatTy(TheContext),false,GlobalVariable::ExternalLinkage,const_float_val,name);
+            {
+                auto AI = new AllocaInst(Type::getFloatTy(TheContext),0,name,block);
+            }
             break;
         default:
             break;

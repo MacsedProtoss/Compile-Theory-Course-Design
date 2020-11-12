@@ -10,9 +10,6 @@ vector<Symbol> symbol_table;
 vector<int> symbol_scope_chain_stack;
 
 void entrypoint(ASTNode* node){
-
-    SemanticsError = false;
-
     readFuncs(node,(FunctionNode *)nullptr);
     readVaribales(node);
     return;

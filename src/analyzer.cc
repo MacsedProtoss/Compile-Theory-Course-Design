@@ -15,7 +15,7 @@ VariableNode::VariableNode() : type(Void) ,hasValue(false) {}
 
 VariableList *globalVars;
 int funcIndex = 0;
-bool SemanticsError;
+bool SemanticsError = false;
 Operation *entryOperation;
 Operation *currentOperation;
 
@@ -463,7 +463,7 @@ Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,i
                         if (vn -> hasValue){
                             variable ->value = vn -> data;
                         }
-                        
+
                         for (int j = 0; j < vars.size(); j++)
                         {
                             Variable* var = vars[j];
