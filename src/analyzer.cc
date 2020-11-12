@@ -1,26 +1,34 @@
 #include "swift-lite.h"
 #include "stdio.h"
 
-VariableList *globalVars;
+class VariableNode
+{
+public:
+    optType type;
+    vector <string> names;
+    int level;
+    variant<char,int,float>data;
+    bool hasValue;
+    VariableNode();
+};
+VariableNode::VariableNode() : type(Void) ,hasValue(false) {}
 
-FunctionNode::FunctionNode() : level(0), return_type(Void) {}
-Block::Block() : EntryNode(nullptr) ,name(""),opt(nullptr){}
-Parameter::Parameter() : type(Void) {}
-Operation::Operation() : kind(0), level(0),next(nullptr){}
-DefineOpt::DefineOpt() : names({}),type(Void) {}
-NormalOpt::NormalOpt() : left(nullptr),right(nullptr) {}
-CompareOpt::CompareOpt() : type(Equal) {}
-RightOpt::RightOpt() : right(nullptr) {}
-VarUseOpt::VarUseOpt() : type(Void), name("") {}
-StaticValueOpt::StaticValueOpt() : type(Void), data(0) {}
-FuncCallOpt::FuncCallOpt() : func(nullptr),args({}) {}
-ConditionOpt::ConditionOpt() : condition(nullptr) {}
-IfOpt::IfOpt() : condintion(nullptr),ifBlock(nullptr),elseBlock(nullptr) {}
-WhileOpt::WhileOpt() : condintion(nullptr),ifBlock(nullptr) {}
+VariableList *globalVars;
+int funcIndex = 0;
+bool SemanticsError;
+Operation *entryOperation;
+Operation *currentOperation;
+
+Operation *readVariablesWithNode(ASTNode *node,VariableList *list,int level);
+Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,int level); // var a,b = 1, read var a,b
+Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level);// lExp = rExp, read rExp
+Operation *readAssignLeftOpt(ASTNode* node,VariableList* list,int level);// lExp = rExp, read lExp
+Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level);// a > b , !b , a != b , read a & b
 
 void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
 void readSubFunctionNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count);
 void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int level);
+void readVariablesInBlock(Block *block,VariableList* father,string name);
 optType getOptType(string raw);
 compareType getCompareType(string raw);
 variant<char,int,float> getStaticValue(variant<int,float,string,char> origin,optType type);
@@ -150,6 +158,17 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                     Variable *variable = new Variable();
                     variable -> name = name;
                     variable -> type = type;
+                    for (int j = 0; j < vars.size(); j++)
+                    {
+                        Variable* var = vars[j];
+                        if (var->name == variable -> name)
+                        {
+                            printf("unexpectedly find conflict arg (args[%d]) with ID:%s, at line %d\n",j,variable->name,node -> pos);
+                            SemanticsError = true;
+                        }
+                        
+                    }
+                    
                     vars.push_back(variable);
                 }
                 func -> block ->varlist->variables.insert(std::make_pair(-1,vars));
@@ -178,27 +197,6 @@ void readSubFunctionNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,
         readFuncs(node->ptr[i],prev);
     }
 }
-
-class VariableNode
-{
-public:
-    optType type;
-    vector <string> names;
-    int level;
-    variant<char,int,float>data;
-    bool hasValue;
-    VariableNode();
-};
-
-VariableNode::VariableNode() : type(Void) ,hasValue(false) {}
-
-static int funcIndex = 0;
-void readVariablesInBlock(Block *block,VariableList* father,string name);
-Operation *readVariablesWithNode(ASTNode *node,VariableList *list,int level);
-Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,int level); // var a,b = 1, read var a,b
-Operation *readAssignRightOpt(ASTNode* node,VariableList* list,int level);// lExp = rExp, read rExp
-Operation *readAssignLeftOpt(ASTNode* node,VariableList* list,int level);// lExp = rExp, read lExp
-Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level);// a > b , !b , a != b , read a & b
 
 void readVariablesGlobal(ASTNode* node,int level){
     if (node){
@@ -465,6 +463,18 @@ Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,i
                         if (vn -> hasValue){
                             variable ->value = vn -> data;
                         }
+                        
+                        for (int j = 0; j < vars.size(); j++)
+                        {
+                            Variable* var = vars[j];
+                            if (var->name == variable -> name)
+                            {
+                                printf("unexpectedly find conflict arg (args[%d]) with ID:%s, at line %d\n",j,variable->name,node -> pos);
+                                SemanticsError = true;
+                            }
+                            
+                        }
+
                         vars.push_back(variable);
                     }
                     list -> variables.insert(std::make_pair(level,vars));
@@ -600,11 +610,17 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     return nullptr;
                 }
                 break;
-            case CONTINUE:
+            case CONTINUE: case BREAK:
                 {
+                    if (list -> namespacing != "INFUNC_WHILE")
+                    {
+                        printf("unexpectedly found continue/break outside of while, at line %d\n",node -> pos);
+                        SemanticsError = true;
+                        return nullptr;
+                    }
                     
                     Operation *newOp = new Operation();
-                    newOp -> kind = CONTINUE;
+                    newOp -> kind = node -> kind;
                     newOp -> level = level;
                     
                     return newOp;
@@ -817,7 +833,14 @@ void readVaribales(ASTNode *node){
     globalVars->namespacing = "global";
     funcIndex = 0;
     readVariablesGlobal(node,0);
-
+    if (SemanticsError)
+    {
+        printf("\nSyntax Error! Compile Process Quit early!\n");
+        return;
+    }
+    
+    print_llvm_ir(entryOperation);
+    return;
 }
 
 optType getOptType(string raw){

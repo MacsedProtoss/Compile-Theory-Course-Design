@@ -32,7 +32,8 @@ using std::get, std::nullopt;
 using std::string, std::unordered_map, std::vector, std::variant, std::shared_ptr, std::tuple, std::optional;
 
 #define PRINT_AST 1
-#define PRINT_SYMBOL_TABLE 0
+#define PRINT_SYMBOL_TABLE 1
+#define PRINT_LLVM_IR 1
 
 enum optType{
     Int,Char,Float,Void
@@ -212,11 +213,27 @@ public:
     WhileOpt();
 };
 
+FunctionNode::FunctionNode() : level(0), return_type(Void) {}
+Block::Block() : EntryNode(nullptr) ,name(""),opt(nullptr){}
+Parameter::Parameter() : type(Void) {}
+Operation::Operation() : kind(0), level(0),next(nullptr){}
+DefineOpt::DefineOpt() : names({}),type(Void) {}
+NormalOpt::NormalOpt() : left(nullptr),right(nullptr) {}
+CompareOpt::CompareOpt() : type(Equal) {}
+RightOpt::RightOpt() : right(nullptr) {}
+VarUseOpt::VarUseOpt() : type(Void), name("") {}
+StaticValueOpt::StaticValueOpt() : type(Void), data(0) {}
+FuncCallOpt::FuncCallOpt() : func(nullptr),args({}) {}
+ConditionOpt::ConditionOpt() : condition(nullptr) {}
+IfOpt::IfOpt() : condintion(nullptr),ifBlock(nullptr),elseBlock(nullptr) {}
+WhileOpt::WhileOpt() : condintion(nullptr),ifBlock(nullptr) {}
+
+
 ASTNode *make_node(int kind, int pos, vector<ASTNode *> nodes = vector<ASTNode *>{});
 void entrypoint(ASTNode *node);
 void bool_expression(ASTNode *node);
 void expression(ASTNode *node);
-void print_llvm_ir(shared_ptr<CodeNode> head);
+void print_llvm_ir(Operation *head);
 void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
 optional<Symbol> search_symbol_table_with_flag(const string &name, char flag);
 tuple<Function *, FunctionType *, Function *, FunctionType *> inject_print_function(LLVMContext &ctx, IRBuilder<> &builder, Module &module);
@@ -228,8 +245,3 @@ optional<Variable*> search_variable_symbol(const string &name,int line,VariableL
 
 void readVaribales(ASTNode *node);
 void insertVariable(Variable* var,VariableList *list,int line);
-
-
-static bool SemanticsError;
-static Operation *entryOperation;
-static Operation *currentOperation;
