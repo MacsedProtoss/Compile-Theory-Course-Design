@@ -1,8 +1,8 @@
 #include "swift-lite.h"
 #include <stdio.h>
 
-Variable::Variable() : hasValue(false) {}
-VariableList::VariableList() : father(nullptr) {}
+Variable::Variable() : hasValue(false),llvmAI(nullptr) {}
+VariableList::VariableList() : father(nullptr){}
 
 VariableList* createSubList(VariableList *father,string name){
     VariableList *son = new VariableList();
@@ -47,4 +47,8 @@ optional<Variable*> search_variable_symbol(const string &name,int line,VariableL
     
     return nullopt;
 
+}
+
+Variable* search_variable_symbol_llvm(const string &name,VariableList *list){
+    return search_variable_symbol(name,999,list).value();
 }

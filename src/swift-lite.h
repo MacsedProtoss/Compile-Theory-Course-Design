@@ -132,6 +132,7 @@ public:
     optType type;
     variant<char,int,float> value;
     bool hasValue;
+    Value *llvmAI;
     Variable();
 };
 
@@ -141,7 +142,6 @@ public:
     VariableList *father;
     string namespacing;
     std::unordered_map<int, vector<Variable*>> variables;
-
     VariableList();
 };
 
@@ -228,6 +228,6 @@ void insertFunc(std::string name,FunctionNode* symbol);
 optional<FunctionNode*> search_function_symbol(const string &name);
 FunctionNode* get_function_symbol(const int index);
 optional<Variable*> search_variable_symbol(const string &name,int line,VariableList *list);
-
+Variable* search_variable_symbol_llvm(const string &name,VariableList *list);
 void readVaribales(ASTNode *node);
 void insertVariable(Variable* var,VariableList *list,int line);

@@ -7,7 +7,7 @@
 using std::pair, std::tuple, std::list, std::make_unique, std::unordered_set;
 
 LLVMContext TheContext;
-Module TheModule("code", TheContext);
+Module TheModule("app", TheContext);
 vector<BasicBlock *> block_stack;
 vector<IRBuilder<>> builder_stack;
 vector<Function *> function_stack;
@@ -177,14 +177,41 @@ void buildVarDefine(Operation *opt,BasicBlock *block){
     
 }
 
-void buildSimpleOpts(Operation *opt,BasicBlock *block){
+void buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
+
+    vector<Operation *> opts;
+    if (opt->kind != ID && opt->kind != INTEGER && opt->kind != FLOAT && opt->kind != CHAR && opt->kind != FUNC_CALL)
+    {
+        Operation *temp = opt;
+        while (temp)
+        {
+            opts.push_back(temp);
+            //TODO：找到最右边然后从右往左
+        }
+        
+    }
+    
+
+
     switch (opt->kind)
     {
     case ID:
-        
+        {
+            VarUseOpt *newOp = (VarUseOpt*) opt;
+            auto var = search_variable_symbol_llvm(newOp->name,list);
+            auto ai = var->llvmAI;
+            // return ai;
+        }
         break;
     case INTEGER :case FLOAT: case CHAR:
-
+        {
+            StaticValueOpt *newOp = (StaticValueOpt*)opt;
+            if (newOp -> kind == INTEGER || newOp -> kind == CHAR)
+            {
+                
+            }
+            
+        }
     case NOT: 
     
     case INCREASE: 
