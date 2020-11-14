@@ -289,22 +289,196 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
             }
             break;
         case COMPARE:
-
-        case AND: 
-
-        case OR: 
-
+            {
+                CompareOpt *cOpt = (CompareOpt *)opt;
+                bool useFloat = false;
+                if (cOpt -> left -> return_type == Float || cOpt -> right -> return_type == Float)
+                {
+                    useFloat = true;
+                }
+                switch (cOpt ->type)
+                {
+                case Equal:
+                    {
+                        auto l = buildSimpleOpts(cOpt -> left,list,block);
+                        auto r = buildSimpleOpts(cOpt -> right,list,block);
+                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
+                        tempIndex ++;
+                        if (useFloat)
+                        {
+                            auto result = builder_stack.back().CreateFCmpOEQ(l,r,tempName);
+                            return result;
+                        }else{
+                            auto result = builder_stack.back().CreateICmpEQ(l,r,tempName);
+                            return result;
+                        }
+                    }
+                    break;
+                case NEqual:
+                    {
+                        auto l = buildSimpleOpts(cOpt -> left,list,block);
+                        auto r = buildSimpleOpts(cOpt -> right,list,block);
+                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
+                        tempIndex ++;
+                        if (useFloat)
+                        {
+                            auto result = builder_stack.back().CreateFCmpONE(l,r,tempName);
+                            return result;
+                        }else{
+                            auto result = builder_stack.back().CreateICmpNE(l,r,tempName);
+                            return result;
+                        }
+                    }
+                    break;
+                case Large:
+                    {
+                        auto l = buildSimpleOpts(cOpt -> left,list,block);
+                        auto r = buildSimpleOpts(cOpt -> right,list,block);
+                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
+                        tempIndex ++;
+                        if (useFloat)
+                        {
+                            auto result = builder_stack.back().CreateFCmpOGT(l,r,tempName);
+                            return result;
+                        }else{
+                            auto result = builder_stack.back().CreateICmpSGT(l,r,tempName);
+                            return result;
+                        }
+                    }
+                    break;
+                case Small:
+                    {
+                        auto l = buildSimpleOpts(cOpt -> left,list,block);
+                        auto r = buildSimpleOpts(cOpt -> right,list,block);
+                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
+                        tempIndex ++;
+                        if (useFloat)
+                        {
+                            auto result = builder_stack.back().CreateFCmpOLT(l,r,tempName);
+                            return result;
+                        }else{
+                            auto result = builder_stack.back().CreateICmpSLT(l,r,tempName);
+                            return result;
+                        }
+                    }
+                    break;
+                case LargeEqual:
+                    {
+                        auto l = buildSimpleOpts(cOpt -> left,list,block);
+                        auto r = buildSimpleOpts(cOpt -> right,list,block);
+                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
+                        tempIndex ++;
+                        if (useFloat)
+                        {
+                            auto result = builder_stack.back().CreateFCmpOGE(l,r,tempName);
+                            return result;
+                        }else{
+                            auto result = builder_stack.back().CreateICmpSGE(l,r,tempName);
+                            return result;
+                        }
+                    }
+                    break;
+                case SmallEqual:
+                    {
+                        auto l = buildSimpleOpts(cOpt -> left,list,block);
+                        auto r = buildSimpleOpts(cOpt -> right,list,block);
+                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
+                        tempIndex ++;
+                        if (useFloat)
+                        {
+                            auto result = builder_stack.back().CreateFCmpOLE(l,r,tempName);
+                            return result;
+                        }else{
+                            auto result = builder_stack.back().CreateICmpSLE(l,r,tempName);
+                            return result;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        case AND: case OR: 
+            {
+                NormalOpt *nOpt = (NormalOpt *)opt;
+                auto l = buildSimpleOpts(nOpt -> left,list,block);
+                auto r = buildSimpleOpts(nOpt -> right,list,block);
+                std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
+                tempIndex ++;
+                if (opt -> kind == AND)
+                {
+                    auto result = builder_stack.back().CreateAnd(l,r,tempName);
+                return result;
+                }else{
+                    auto result = builder_stack.back().CreateOr(l,r,tempName);
+                    return result;
+                }
+                
+            }
+            break;
         case PLUS: 
-
         case MINUS: 
-
         case MULTI: 
-
         case DIVID:
+            {
+                NormalOpt *nOpt = (NormalOpt *)opt;
+                auto l = buildSimpleOpts(nOpt -> left,list,block);
+                auto r = buildSimpleOpts(nOpt -> right,list,block);
+                bool useFloat = false;
+                if (nOpt -> left -> return_type == Float || nOpt -> right -> return_type == Float)
+                {
+                    useFloat = true;
+                }
+                switch (opt -> kind)
+                {
+                case PLUS:
+                    if (useFloat)
+                    {
+                        auto result = builder_stack.back().CreateFAdd(l,r,l->getName());
+                        return result;
+                    }else{
+                        auto result = builder_stack.back().CreateAdd(l,r,l->getName());
+                        return result;
+                    }
+                    break;
+                case MINUS:
+                    if (useFloat)
+                    {
+                        auto result = builder_stack.back().CreateFSub(l,r,l->getName());
+                        return result;
+                    }else{
+                        auto result = builder_stack.back().CreateSub(l,r,l->getName());
+                        return result;
+                    }
+                case MULTI:
+                    if (useFloat)
+                    {
+                        auto result = builder_stack.back().CreateFMul(l,r,l->getName());
+                        return result;
+                    }else{
+                        auto result = builder_stack.back().CreateMul(l,r,l->getName());
+                        return result;
+                    }
+                case DIVID:
+                    if (useFloat)
+                    {
+                        auto result = builder_stack.back().CreateFDiv(l,r,l->getName());
+                        return result;
+                    }else{
+                        auto result = builder_stack.back().CreateSDiv(l,r,l->getName());
+                        return result;
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
 
         case FUNC_CALL:
-    default:
-        break;
+            //MARK:TODO
+            break;
+        default:
+            break;
     }
 }
 
