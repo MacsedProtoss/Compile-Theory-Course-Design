@@ -5,6 +5,7 @@
 #include "math.h"
 #include "string.h"
 #include "swift-lite.h"
+bool didPass = true;
 extern int yylineno;
 extern char *yytext;
 extern FILE *yyin;
@@ -50,7 +51,7 @@ int yylex();
 %%
 
 program: 
-        ExternalDefineList {print_ast_node($1,0);entrypoint($1);}
+        ExternalDefineList {if(didPass){print_ast_node($1,0);entrypoint($1);}else{printf("\n parse failed, Compile preogree exit early! \n");} }
         ;
 ExternalDefineList:
         ExternalDefine {$$=make_node(EXT_DEF_LIST,yylineno,{$1});}
@@ -202,4 +203,5 @@ void yyerror(const char* fmt, ...) {
     fprintf(stderr, "Grammar Error at Line %d Column %d: ", yylloc.first_line,yylloc.first_column);
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, ".\n");
+    didPass = false;
 }

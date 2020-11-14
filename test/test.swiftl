@@ -1,7 +1,7 @@
-var c : Int = 2 + 3;
+var c : Int = 2 + 3 * 4 + 5;
 var d : Int;
 func add(a : Int, b : Int) -> Int {
-    return a + b;
+    return a + b * 2 + 3;
 }
 
 var e : Int;
@@ -9,7 +9,8 @@ var e : Int;
 func main() {
     var a : Int = 12;
     var b : Float = 1.2 + 3.6;
-
+    a++;
+    1++;
     if (!a) {
         
     }else{

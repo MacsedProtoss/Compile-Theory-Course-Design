@@ -152,10 +152,15 @@ public:
     DefineOpt();
 };
 
-class NormalOpt : public Operation{
+class RightOpt : public Operation{
+public:
+    Operation *right;
+    RightOpt();
+};
+
+class NormalOpt : public RightOpt{
 public:
     Operation *left;
-    Operation *right;
     NormalOpt();
 };
 
@@ -165,11 +170,6 @@ public:
     CompareOpt();
 };
 
-class RightOpt : public Operation{
-public:
-    Operation *right;
-    RightOpt();
-};
 
 class VarUseOpt : public Operation{
 public:

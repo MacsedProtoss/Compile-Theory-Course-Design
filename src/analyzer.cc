@@ -18,7 +18,7 @@ Block::Block() : EntryNode(nullptr) ,name(""),opt(nullptr){}
 Parameter::Parameter() : type(Void) {}
 Operation::Operation() : kind(0), level(0),next(nullptr),return_type(Void){}
 DefineOpt::DefineOpt() : names({}),type(Void) {}
-NormalOpt::NormalOpt() : left(nullptr),right(nullptr) {}
+NormalOpt::NormalOpt() : left(nullptr) {}
 CompareOpt::CompareOpt() : type(Equal) {}
 RightOpt::RightOpt() : right(nullptr) {}
 VarUseOpt::VarUseOpt() : type(Void), name("") {}
@@ -428,6 +428,10 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                     if (newOp ->right->return_type != Int)
                     {
                         printf("INCREASE/DECREASE can only be applied to Int, at line %d\n",node -> pos);
+                        SemanticsError = true;
+                        return nullptr;
+                    }else if (newOp -> right -> kind == Int){
+                        printf("INCREASE/DECREASE can only be applied to Varable but not static Int, at line %d\n",node -> pos);
                         SemanticsError = true;
                         return nullptr;
                     }

@@ -6,11 +6,15 @@
 
 using std::pair, std::tuple, std::list, std::make_unique, std::unordered_set;
 
+unsigned long int tempIndex = 0;
+
 LLVMContext TheContext;
 Module TheModule("app", TheContext);
 vector<BasicBlock *> block_stack;
 vector<IRBuilder<>> builder_stack;
 vector<Function *> function_stack;
+
+extern VariableList *globalVars;
 
 unordered_map<string, pair<Function *, FunctionType *>> function_table;
 unordered_map<string, pair<Value *, int>> val_table;
@@ -23,7 +27,7 @@ unordered_map<string, vector<Instruction *>> deferred_goto_statement;
 list<DeferredBrStatementType> deferred_br_statement;
 vector<GlobalVariable*> buildGVarDefine(Operation *opt);
 void buildVarDefine(Operation *opt,BasicBlock *block);
-void buildSimpleOpts(Operation *opt,BasicBlock *block);
+Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block);
 
 ConstantInt* const_int_val = ConstantInt::get(TheContext, APInt(32,0));
 ConstantInt* const_char_val = ConstantInt::get(TheContext, APInt(32,0));
@@ -85,10 +89,12 @@ void print_llvm_ir(Operation *head){
 
                 NormalOpt *opt = (NormalOpt*) currentOpt;
                 auto gvars = buildGVarDefine(opt -> left);
+                buildSimpleOpts(opt -> right,globalVars,preAssignBlock);
                 for (int i = 0; i < gvars.size(); i++)
                 {
                     auto var = gvars[i];
                     auto l = preAssignBuilder.CreateLoad(var);
+                    // auto l = var;
                     auto v = ConstantInt::get(Type::getInt32Ty(TheContext), 1);
                     preAssignBuilder.CreateStore(l,v);
                 }
@@ -185,64 +191,118 @@ void buildVarDefine(Operation *opt,BasicBlock *block){
     
 }
 
-void buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
+Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
+    // vector<Operation *> opts;
+    // if (opt->kind != ID && opt->kind != INTEGER && opt->kind != FLOAT && opt->kind != CHAR && opt->kind != FUNC_CALL)
+    // {
+    //     Operation *temp = opt;
+    //     while (temp)
+    //     {
+    //         opts.push_back(temp);
+    //         RightOpt *rOpt = (RightOpt*)temp;
+    //         temp = rOpt -> right;
+    //     }
 
-    vector<Operation *> opts;
-    if (opt->kind != ID && opt->kind != INTEGER && opt->kind != FLOAT && opt->kind != CHAR && opt->kind != FUNC_CALL)
-    {
-        Operation *temp = opt;
-        while (temp)
-        {
-            opts.push_back(temp);
-            //TODO：找到最右边然后从右往左
-        }
+    //     while (opts.size())
+    //     {
+    //         Operation *opt = opts.back();
+    //         opts.pop_back();
+
+            
+
+    //         default:
+    //             break;
+    //         }
+    //     }
         
-    }
+        
+    // }
     
 
-
+    
     switch (opt->kind)
     {
-    case ID:
-        {
-            VarUseOpt *newOp = (VarUseOpt*) opt;
-            auto var = search_variable_symbol_llvm(newOp->name,list);
-            auto ai = var->llvmAI;
-            // return ai;
-        }
-        break;
-    case INTEGER :case FLOAT: case CHAR:
-        {
-            StaticValueOpt *newOp = (StaticValueOpt*)opt;
-            if (newOp -> kind == INTEGER || newOp -> kind == CHAR)
+        case ID:
             {
+                VarUseOpt *newOp = (VarUseOpt*) opt;
+                auto var = search_variable_symbol_llvm(newOp->name,list);
+                auto ai = var->llvmAI;
+                return ai;
+            }
+            break;
+        case INTEGER :case FLOAT: case CHAR:
+            {
+                StaticValueOpt *newOp = (StaticValueOpt*)opt;
+                if (newOp -> kind == INTEGER || newOp -> kind == CHAR)
+                {
+                    if (newOp -> kind == INTEGER)
+                    {
+                        int value = get<int>(newOp -> data);
+                        if (newOp -> return_type == Float){
+                            auto v = ConstantInt::get(Type::getFloatTy(TheContext), (float)value);
+                            return v;
+                        }else{
+                            auto v = ConstantInt::get(Type::getInt32Ty(TheContext), value);
+                            return v;
+                        }
+                        
+                    }else{
+                        int value = (int)get<char>(newOp -> data);
+                        auto v = ConstantInt::get(Type::getInt32Ty(TheContext), value);
+                        return v;
+                    }
+                    // std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
+                }else{
+                    float value = get<float>(newOp -> data);
+                    auto v = ConstantInt::get(Type::getFloatTy(TheContext), value);
+                    return v;
+                }
                 
             }
-            
-        }
-    case NOT: 
-    
-    case INCREASE: 
-    
-    case DECREASE:
+            break;
+        case NOT: 
+            {
+                RightOpt *rOpt = (RightOpt*)opt;
+                auto result = buildSimpleOpts(rOpt -> right,list,block);
+                std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
+                tempIndex ++;
+                auto returnValue = builder_stack.back().CreateNot(result,tempName);
+                return returnValue;
+            }
+            break;
+        case INCREASE: 
+            {
+                RightOpt *rOpt = (RightOpt*)opt;
+                auto l = buildSimpleOpts(rOpt -> right,list,block);
+                auto r = ConstantInt::get(Type::getInt32Ty(TheContext), 1);
+                auto returnValue = builder_stack.back().CreateAdd(l,r,l->getName());
+                return returnValue;
+            }
+            break;
+        case DECREASE:
+            {
+                RightOpt *rOpt = (RightOpt*)opt;
+                auto l = buildSimpleOpts(rOpt -> right,list,block);
+                auto r = ConstantInt::get(Type::getInt32Ty(TheContext), 1);
+                auto returnValue = builder_stack.back().CreateSub(l,r,l->getName());
+                return returnValue;
+            }
+            break;
+        case COMPARE:
 
-    case COMPARE:
+        case AND: 
 
-    case AND: 
+        case OR: 
 
-    case OR: 
+        case PLUS: 
 
-    case PLUS: 
+        case MINUS: 
 
-    case MINUS: 
+        case MULTI: 
 
-    case MULTI: 
+        case DIVID:
 
-    case DIVID:
-
-    case FUNC_CALL:
-
-
+        case FUNC_CALL:
     default:
         break;
     }

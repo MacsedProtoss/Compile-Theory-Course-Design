@@ -2,7 +2,7 @@
 
 <bison-xml-report version="3.5.1" bug-report="bug-bison@gnu.org" url="https://www.gnu.org/software/bison/">
 
-  <filename>parser.y</filename>
+  <filename>./parser.y</filename>
 
   <grammar>
     <rules>
