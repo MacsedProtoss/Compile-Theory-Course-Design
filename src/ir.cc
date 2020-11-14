@@ -68,6 +68,12 @@ ConstantFP* const_float_val = ConstantFP::get(TheContext, APFloat(0.0));
 void print_llvm_ir(Operation *head){
     builder_stack.emplace_back(IRBuilder<>(TheContext));
 
+    Type *preAssignreturnType = Type::getVoidTy(TheContext);
+    FunctionType *reAssignfunctionType = FunctionType::get(preAssignreturnType,false);
+    Function *fpreAssignunctionValue = Function::Create(reAssignfunctionType,Function::ExternalLinkage,"preservedFunction_Global_var_assign_init",TheModule);
+    BasicBlock *preAssignBlock = BasicBlock::Create(TheContext,"entry",fpreAssignunctionValue);
+    IRBuilder<> preAssignBuilder(preAssignBlock);
+
     Operation *currentOpt = head;
     while (currentOpt)
     {
@@ -82,9 +88,9 @@ void print_llvm_ir(Operation *head){
                 for (int i = 0; i < gvars.size(); i++)
                 {
                     auto var = gvars[i];
-                    auto l = builder_stack.back().CreateLoad(var);
+                    auto l = preAssignBuilder.CreateLoad(var);
                     auto v = ConstantInt::get(Type::getInt32Ty(TheContext), 1);
-                    builder_stack.back().CreateStore(l,v);
+                    preAssignBuilder.CreateStore(l,v);
                 }
                 
                 
@@ -99,6 +105,8 @@ void print_llvm_ir(Operation *head){
         }
         currentOpt = currentOpt -> next;
     }
+
+    preAssignBuilder.CreateRetVoid();
     
     if constexpr (PRINT_LLVM_IR == 1)
     {
