@@ -92,9 +92,8 @@ void print_llvm_ir(Operation *head){
                 for (int i = 0; i < gvars.size(); i++)
                 {
                     auto var = gvars[i];
-                    auto l = preAssignBuilder.CreateLoad(var);
                     auto v = buildSimpleOpts(opt->right,globalVars,preAssignBlock);
-                    preAssignBuilder.CreateStore(l,v);
+                    preAssignBuilder.CreateStore(v,var);
                 }
                 builder_stack.pop_back();
                 

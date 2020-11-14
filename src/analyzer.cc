@@ -397,6 +397,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
         case INTEGER :case FLOAT: case CHAR:
             {
                 StaticValueOpt *newOp = new StaticValueOpt();
+                newOp -> kind = node -> kind;
                 newOp -> type = getOptType(node->type);
                 newOp -> data = getStaticValue(node->data,newOp -> type);
                 newOp -> return_type = newOp -> type;
