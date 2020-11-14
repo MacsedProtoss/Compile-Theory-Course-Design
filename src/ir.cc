@@ -86,25 +86,29 @@ void print_llvm_ir(Operation *head){
         case ASSIGN:
             {
                 //must be var define assign
-
+                builder_stack.push_back(preAssignBuilder);
                 NormalOpt *opt = (NormalOpt*) currentOpt;
                 auto gvars = buildGVarDefine(opt -> left);
-                buildSimpleOpts(opt -> right,globalVars,preAssignBlock);
                 for (int i = 0; i < gvars.size(); i++)
                 {
                     auto var = gvars[i];
                     auto l = preAssignBuilder.CreateLoad(var);
-                    // auto l = var;
-                    auto v = ConstantInt::get(Type::getInt32Ty(TheContext), 1);
+                    auto v = buildSimpleOpts(opt->right,globalVars,preAssignBlock);
                     preAssignBuilder.CreateStore(l,v);
                 }
-                
+                builder_stack.pop_back();
                 
             }
             break;
         case VAR_DEFINE:
+            {
+                auto gvars = buildGVarDefine(currentOpt);
+            }
             break;
         case FUNCTION:
+            {
+                //TODO
+            }
             break;
         default:
             break;
@@ -192,33 +196,6 @@ void buildVarDefine(Operation *opt,BasicBlock *block){
 }
 
 Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
-    // vector<Operation *> opts;
-    // if (opt->kind != ID && opt->kind != INTEGER && opt->kind != FLOAT && opt->kind != CHAR && opt->kind != FUNC_CALL)
-    // {
-    //     Operation *temp = opt;
-    //     while (temp)
-    //     {
-    //         opts.push_back(temp);
-    //         RightOpt *rOpt = (RightOpt*)temp;
-    //         temp = rOpt -> right;
-    //     }
-
-    //     while (opts.size())
-    //     {
-    //         Operation *opt = opts.back();
-    //         opts.pop_back();
-
-            
-
-    //         default:
-    //             break;
-    //         }
-    //     }
-        
-        
-    // }
-    
-
     
     switch (opt->kind)
     {
@@ -475,11 +452,45 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
             }
 
         case FUNC_CALL:
+            {
+                std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
+                tempIndex ++;
+
+                FuncCallOpt *fOpt = (FuncCallOpt*)opt;
+                auto [fn, fnType] = function_table[fOpt -> func -> name];
+                vector<Value*> params;
+                for (int i = 0; i < fOpt->args.size(); i++)
+                {
+                    Operation *todoP;
+                    auto arg = fOpt->args[i];
+                    try {
+                        VarUseOpt* p = get<VarUseOpt*>(arg);
+                        todoP = p;
+                        
+                    }catch (std::bad_variant_access&) {
+                        try {
+                            StaticValueOpt* p = get<StaticValueOpt*>(arg);
+                            
+                            todoP = p;
+
+                        }catch (std::bad_variant_access&) {
+                            //do nothing
+                        }
+                    }
+
+                    params.push_back(buildSimpleOpts(todoP,list,block));
+                }
+                auto result = builder_stack.back().CreateCall(fn,params,tempName);
+                return result;
+            }
+            
             //MARK:TODO
             break;
         default:
+            return nullptr;
             break;
     }
+    return nullptr;
 }
 
 // variant<char,int,float> 

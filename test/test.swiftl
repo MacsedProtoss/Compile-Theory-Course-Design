@@ -10,7 +10,6 @@ func main() {
     var a : Int = 12;
     var b : Float = 1.2 + 3.6;
     a++;
-    1++;
     if (!a) {
         
     }else{
