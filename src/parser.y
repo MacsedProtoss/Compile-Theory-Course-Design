@@ -74,6 +74,7 @@ STATEMENT:
 
       | BREAK EOL {$$=make_node(BREAK,yylineno);}
       | CONTINUE EOL {$$=make_node(CONTINUE,yylineno);}
+      | RETURN EOL   {$$=make_node(RETURN,yylineno,{nullptr});}
       | RETURN Exp EOL   {$$=make_node(RETURN,yylineno,{$2});}
       | FUNCCALL EOL {$$=$1;}
       | Exp EOL {$$=make_node(Exp_STATMENT,yylineno,{$1});}

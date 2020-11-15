@@ -583,13 +583,14 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
 void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
 
     Operation *currentOpt = opt;
+    int debugV = 0;
     while (currentOpt){
-            switch (opt -> kind)
+            switch (currentOpt -> kind)
         {
             case AND: case OR: case NOT: case PLUS: case MINUS: case MULTI: case DIVID:
             case COMPARE: case INCREASE: case DECREASE:
             case INTEGER: case FLOAT: case CHAR: case ID: case FUNC_CALL:
-                buildSimpleOpts(opt,list,block);
+                buildSimpleOpts(currentOpt,list,block);
                 break;
             case ASSIGN:
                 {
@@ -601,6 +602,8 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
                         for (int i = 0; i < vars.size(); i++)
                         {
                             auto var = vars[i];
+                            auto trueVar = search_variable_symbol_llvm(var->getName(),list);
+                            trueVar ->llvmAI = var;
                             builder_stack.back().CreateStore(r,var);
                         }
                     }else{
@@ -613,7 +616,14 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
             case VAR_DEFINE:
                 {
                     auto result = buildVarDefine(currentOpt,block);
+                    for (int i = 0; i < result.size(); i++)
+                    {
+                        auto var = result[i];
+                        auto trueVar = search_variable_symbol_llvm(var->getName(),list);
+                        trueVar ->llvmAI = var;
+                    }
                 }
+                break;
             case RETURN:
                 {
                     RightOpt *rOpt = (RightOpt *)currentOpt;
@@ -690,6 +700,8 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
         }
 
         currentOpt = currentOpt -> next;
+        debugV ++;
+        printf("ir function progress %s %d\n",list->namespacing.c_str(),debugV);
     }
     
 
