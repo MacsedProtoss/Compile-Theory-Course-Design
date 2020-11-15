@@ -27,6 +27,7 @@ FuncCallOpt::FuncCallOpt() : func(nullptr),args({}) {}
 ConditionOpt::ConditionOpt() : condition(nullptr) {}
 IfOpt::IfOpt() : condintion(nullptr),ifBlock(nullptr),elseBlock(nullptr) {}
 WhileOpt::WhileOpt() : condintion(nullptr),ifBlock(nullptr) {}
+FuncAnnounceOpt::FuncAnnounceOpt() : func(nullptr){}
 
 
 VariableList *globalVars;
@@ -285,6 +286,21 @@ void readVariablesGlobal(ASTNode* node,int level){
 
                     readVariablesInBlock(func->block,globalVars,func->name);
                     funcIndex++;
+
+                    FuncAnnounceOpt *newOp = new FuncAnnounceOpt();
+                    newOp -> kind = FUNCTION;
+                    newOp -> func = func;
+                    newOp -> level = level;
+                    newOp -> return_type = func -> return_type;
+
+                    if (entryOperation == nullptr){
+                        entryOperation = newOp;
+                        currentOperation = entryOperation;
+                    }else{
+                        currentOperation -> next = newOp;
+                        currentOperation = newOp;
+                    }
+                    
                 }
                 break;
             

@@ -215,6 +215,12 @@ public:
 };
 
 
+class FuncAnnounceOpt : public Operation{
+public:
+    FunctionNode *func;
+    FuncAnnounceOpt();
+};
+
 ASTNode *make_node(int kind, int pos, vector<ASTNode *> nodes = vector<ASTNode *>{});
 void entrypoint(ASTNode *node);
 void bool_expression(ASTNode *node);

@@ -106,7 +106,50 @@ void print_llvm_ir(Operation *head){
             break;
         case FUNCTION:
             {
-                //TODO
+                FuncAnnounceOpt *fOpt = (FuncAnnounceOpt *)currentOpt;
+                Type *return_type;
+                switch (fOpt -> func -> return_type)
+                {
+                case Void:
+                    return_type = Type::getVoidTy(TheContext);
+                    break;
+                case Int: case Char:
+                    return_type = Type::getInt32Ty(TheContext);
+                    break;
+                case Float:
+                    return_type = Type::getFloatTy(TheContext);
+                    break;
+                default:
+                    break;
+                }
+
+                vector<Type *> parameters;
+                for (int i = 0; i < fOpt -> func -> parameters.size(); i++)
+                {
+                    auto arg = fOpt -> func -> parameters[i];
+                    if (arg->type == Float)
+                    {
+                        parameters.push_back(Type::getFloatTy(TheContext));
+                    }else{
+                        parameters.push_back(Type::getInt32Ty(TheContext));
+                    }
+                    
+                }
+
+                FunctionType *function_type = FunctionType::get(return_type, parameters, false);
+                Function *function_value = Function::Create(function_type, Function::ExternalLinkage, fOpt -> func -> name, TheModule);
+                BasicBlock *next_block = BasicBlock::Create(TheContext, "entry", function_value);
+                function_table[fOpt -> func -> name] = {function_value, function_type};
+
+                IRBuilder<> next_builder(next_block);
+                builder_stack.push_back(next_builder);
+                block_stack.push_back(next_block);
+                
+                //TODO : read
+
+                builder_stack.pop_back();
+                block_stack.pop_back();
+                
             }
             break;
         default:
@@ -492,4 +535,9 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
     return nullptr;
 }
 
+void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
+
+    
+
+}
 // variant<char,int,float> 
