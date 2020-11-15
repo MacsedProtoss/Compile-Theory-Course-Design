@@ -758,8 +758,30 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     RightOpt *newOp = new RightOpt();
                     newOp -> kind = RETURN;
                     newOp -> level = level;
-                    newOp -> right = readSimpleOpt(node->ptr[0],list,ASSIGN,level,false);
-                    newOp -> return_type = newOp -> right -> return_type;
+                    if (!node->ptr[0])
+                    {
+                        newOp -> return_type = Void;
+                    }else{
+                        newOp -> right = readSimpleOpt(node->ptr[0],list,ASSIGN,level,false);
+                        newOp -> return_type = newOp -> right -> return_type;
+                    }
+                    
+                    FunctionNode *func = get_function_symbol(funcIndex);
+                    
+                    if (func -> return_type != newOp -> return_type)
+                    {
+                        if (func -> return_type == Float && newOp -> return_type == Int)
+                        {
+                            newOp -> return_type = Float;
+                        }else if (func -> return_type == Int && newOp -> return_type == Char){
+                            newOp -> return_type = Int;
+                        }else{
+                            printf("func return type error! expecting %d(enum) but found %d(enum), at line %d\n",func -> return_type ,newOp -> return_type,node -> pos);
+                            SemanticsError = true;
+                            return nullptr;
+                        }
+                        
+                    }
                     return newOp;
                 }
                 break;

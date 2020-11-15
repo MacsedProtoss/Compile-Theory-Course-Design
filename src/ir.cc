@@ -26,8 +26,9 @@ typedef tuple<Instruction *, Value *, string, string> DeferredBrStatementType;
 unordered_map<string, vector<Instruction *>> deferred_goto_statement;
 list<DeferredBrStatementType> deferred_br_statement;
 vector<GlobalVariable*> buildGVarDefine(Operation *opt);
-void buildVarDefine(Operation *opt,BasicBlock *block);
+vector<Value*> buildVarDefine(Operation *opt,BasicBlock *block);
 Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block);
+void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block);
 
 ConstantInt* const_int_val = ConstantInt::get(TheContext, APInt(32,0));
 ConstantInt* const_char_val = ConstantInt::get(TheContext, APInt(32,0));
@@ -136,6 +137,8 @@ void print_llvm_ir(Operation *head){
                     
                 }
 
+                
+
                 FunctionType *function_type = FunctionType::get(return_type, parameters, false);
                 Function *function_value = Function::Create(function_type, Function::ExternalLinkage, fOpt -> func -> name, TheModule);
                 BasicBlock *next_block = BasicBlock::Create(TheContext, "entry", function_value);
@@ -145,7 +148,7 @@ void print_llvm_ir(Operation *head){
                 builder_stack.push_back(next_builder);
                 block_stack.push_back(next_block);
                 
-                //TODO : read
+                buildInFuncOpts(fOpt -> func -> block -> opt,fOpt -> func -> block -> varlist,next_block);
 
                 builder_stack.pop_back();
                 block_stack.pop_back();
@@ -207,7 +210,7 @@ vector<GlobalVariable*> buildGVarDefine(Operation *opt){
     return vars;
 }
 
-void buildVarDefine(Operation *opt,BasicBlock *block){
+vector<Value*> buildVarDefine(Operation *opt,BasicBlock *block){
     DefineOpt *defineOpt = (DefineOpt*)opt;
     for (int i = 0; i < defineOpt ->names.size(); i++)
     {
@@ -520,13 +523,16 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                         }
                     }
 
-                    params.push_back(buildSimpleOpts(todoP,list,block));
+                    auto doneValue = buildSimpleOpts(todoP,list,block);
+                    auto trueVar = search_variable_symbol_llvm(fOpt->func->parameters[i]->name,fOpt->func->block->varlist);
+                    trueVar ->llvmAI = doneValue;
+                    params.push_back(doneValue);
+
                 }
                 auto result = builder_stack.back().CreateCall(fn,params,tempName);
                 return result;
             }
             
-            //MARK:TODO
             break;
         default:
             return nullptr;
@@ -537,6 +543,62 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
 
 void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
 
+    Operation *currentOpt = opt;
+    while (currentOpt){
+            switch (opt -> kind)
+        {
+            case AND: case OR: case NOT: case PLUS: case MINUS: case MULTI: case DIVID:
+            case COMPARE: case INCREASE: case DECREASE:
+            case INTEGER: case FLOAT: case CHAR: case ID: case FUNC_CALL:
+                buildSimpleOpts(opt,list,block);
+                break;
+            case ASSIGN:
+                {
+                    NormalOpt *nOpt = (NormalOpt*) currentOpt;
+                    auto r = buildSimpleOpts(nOpt -> right,list,block);
+                    if (nOpt -> left -> kind == VAR_DEFINE)
+                    {
+                        auto vars = buildVarDefine(nOpt -> left,block);
+                        for (int i = 0; i < vars.size(); i++)
+                        {
+                            auto var = vars[i];
+                            builder_stack.back().CreateStore(r,var);
+                        }
+                    }else{
+                        auto l = buildSimpleOpts(nOpt -> left,list,block);
+                        builder_stack.back().CreateStore(r,l);
+                    }
+                    
+                }
+                break;
+            case VAR_DEFINE:
+                {
+                    auto result = buildVarDefine(currentOpt,block);
+                }
+            case RETURN:
+                {
+                    RightOpt *rOpt = (RightOpt *)currentOpt;
+                    if (rOpt -> return_type == Void)
+                    {
+                        builder_stack.back().CreateRetVoid();
+                    }else{
+                        auto r = buildSimpleOpts(rOpt -> right,list,block);
+                        builder_stack.back().CreateRet(r);
+                    }
+                    
+                }
+                break;
+            case CONTINUE: case BREAK:
+                {
+                    //TODO
+                }
+                break;
+            default:
+                break;
+        }
+
+        currentOpt = currentOpt -> next;
+    }
     
 
 }
