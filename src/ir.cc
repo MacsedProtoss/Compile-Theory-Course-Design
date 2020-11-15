@@ -87,12 +87,15 @@ void print_llvm_ir(Operation *head){
         case ASSIGN:
             {
                 //must be var define assign
-                builder_stack.push_back(preAssignBuilder);
+                
                 NormalOpt *opt = (NormalOpt*) currentOpt;
                 auto gvars = buildGVarDefine(opt -> left);
+                builder_stack.push_back(preAssignBuilder);
                 for (int i = 0; i < gvars.size(); i++)
                 {
-                    auto var = gvars[i];
+                    auto var = gvars[i]; //llvm
+                    auto varable = search_variable_symbol_llvm(var->getName(),globalVars);//mine
+                    varable -> llvmAI = var;
                     auto v = buildSimpleOpts(opt->right,globalVars,preAssignBlock);
                     preAssignBuilder.CreateStore(v,var);
                 }
@@ -103,6 +106,12 @@ void print_llvm_ir(Operation *head){
         case VAR_DEFINE:
             {
                 auto gvars = buildGVarDefine(currentOpt);
+                for (int i = 0; i < gvars.size(); i++)
+                {
+                    auto var = gvars[i]; //llvm
+                    auto varable = search_variable_symbol_llvm(var->getName(),globalVars);//mine
+                    varable -> llvmAI = var;
+                }
             }
             break;
         case FUNCTION:
@@ -134,10 +143,8 @@ void print_llvm_ir(Operation *head){
                     }else{
                         parameters.push_back(Type::getInt32Ty(TheContext));
                     }
-                    
-                }
 
-                
+                }
 
                 FunctionType *function_type = FunctionType::get(return_type, parameters, false);
                 Function *function_value = Function::Create(function_type, Function::ExternalLinkage, fOpt -> func -> name, TheModule);
@@ -147,6 +154,7 @@ void print_llvm_ir(Operation *head){
                 IRBuilder<> next_builder(next_block);
                 builder_stack.push_back(next_builder);
                 block_stack.push_back(next_block);
+                function_stack.push_back(function_value);
                 
                 buildInFuncOpts(fOpt -> func -> block -> opt,fOpt -> func -> block -> varlist,next_block);
 
@@ -212,6 +220,7 @@ vector<GlobalVariable*> buildGVarDefine(Operation *opt){
 
 vector<Value*> buildVarDefine(Operation *opt,BasicBlock *block){
     DefineOpt *defineOpt = (DefineOpt*)opt;
+    vector<Value*> vars;
     for (int i = 0; i < defineOpt ->names.size(); i++)
     {
         string name = defineOpt -> names[i];
@@ -220,24 +229,27 @@ vector<Value*> buildVarDefine(Operation *opt,BasicBlock *block){
         case Int:
             {
                 auto AI = new AllocaInst(Type::getInt32Ty(TheContext),0,name,block);
+                vars.push_back(AI);
             }
             
             break;
         case Char:
             {
                 auto AI = new AllocaInst(Type::getInt32Ty(TheContext),0,name,block);
+                vars.push_back(AI);
             }
             break;
         case Float:
             {
                 auto AI = new AllocaInst(Type::getFloatTy(TheContext),0,name,block);
+                vars.push_back(AI);
             }
             break;
         default:
             break;
         }
     }
-    
+    return vars;
 }
 
 Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
@@ -248,8 +260,37 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
             {
                 VarUseOpt *newOp = (VarUseOpt*) opt;
                 auto var = search_variable_symbol_llvm(newOp->name,list);
-                auto ai = var->llvmAI;
-                return ai;
+                if (var -> llvmAI == nullptr)
+                {
+                    //then its parameters;
+                    auto func = function_stack.back();
+                    auto naiveFunc = search_function_symbol(func->getName());
+                    auto params = naiveFunc.value()->parameters;
+                    int index = 0;
+                    for (int i = 0; i < params.size(); i++)
+                    {
+                        if (var -> name == params[i]->name)
+                        {
+                            index = i;
+                        }
+                        
+                    }
+                    
+                    int temp = 0;
+                    for (auto& A : func->args()) {
+                        if (temp == index)
+                        {
+                            return &A;
+                        }
+                        
+                        temp ++;
+                    }
+                    return nullptr;
+                }else{
+                    auto ai = var->llvmAI;
+                    return ai;
+                }
+                
             }
             break;
         case INTEGER :case FLOAT: case CHAR:
@@ -524,8 +565,6 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     }
 
                     auto doneValue = buildSimpleOpts(todoP,list,block);
-                    auto trueVar = search_variable_symbol_llvm(fOpt->func->parameters[i]->name,fOpt->func->block->varlist);
-                    trueVar ->llvmAI = doneValue;
                     params.push_back(doneValue);
 
                 }
@@ -590,7 +629,60 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
                 break;
             case CONTINUE: case BREAK:
                 {
-                    //TODO
+                    
+                }
+                break;
+            case WHILE:
+                {
+                    WhileOpt *wOpt = (WhileOpt*)currentOpt;
+                    BasicBlock *ifBasicBlock = BasicBlock::Create(TheContext, "if", function_stack.back());
+                    BasicBlock *conditionBasicBlock = BasicBlock::Create(TheContext, "condition", function_stack.back());
+
+                    IRBuilder<> ifBuilder(ifBasicBlock);
+                    builder_stack.push_back(ifBuilder);
+                    block_stack.push_back(ifBasicBlock);
+                    buildInFuncOpts(wOpt->ifBlock->opt,wOpt->ifBlock->varlist,ifBasicBlock);
+                    builder_stack.back().CreateBr(conditionBasicBlock);
+                    builder_stack.pop_back();
+                    block_stack.pop_back();
+                    
+                    IRBuilder<> condBuilder(conditionBasicBlock);
+                    builder_stack.push_back(condBuilder);
+                    block_stack.push_back(conditionBasicBlock);
+                    auto condition = buildSimpleOpts(wOpt->condintion->condition,list,conditionBasicBlock);
+                    builder_stack.back().CreateCondBr(condition,ifBasicBlock,nullptr);
+                    builder_stack.pop_back();
+                    block_stack.pop_back();
+
+                }
+                break;
+            case IF_THEN: case IF_THEN_ELSE:
+                {
+                    IfOpt *iOpt = (IfOpt*)currentOpt;
+                    BasicBlock *ifBasicBlock = BasicBlock::Create(TheContext, "if", function_stack.back());
+                    BasicBlock *elseBasicBlock = BasicBlock::Create(TheContext, "else", function_stack.back());
+                    
+                    auto condition = buildSimpleOpts(iOpt->condintion->condition,list,block);
+
+                    IRBuilder<> ifBuilder(ifBasicBlock);
+                    builder_stack.push_back(ifBuilder);
+                    block_stack.push_back(ifBasicBlock);
+                    buildInFuncOpts(iOpt->ifBlock->opt,iOpt->ifBlock->varlist,ifBasicBlock);
+                    builder_stack.pop_back();
+                    block_stack.pop_back();
+
+                    if (currentOpt -> kind == IF_THEN_ELSE)
+                    {
+                        IRBuilder<> elseBuilder(elseBasicBlock);
+                        builder_stack.push_back(elseBuilder);
+                        block_stack.push_back(elseBasicBlock);
+                        buildInFuncOpts(iOpt->elseBlock->opt,iOpt->elseBlock->varlist,elseBasicBlock);
+                        builder_stack.pop_back();
+                        block_stack.pop_back();
+                    }
+                    
+                    builder_stack.back().CreateCondBr(condition,ifBasicBlock,elseBasicBlock);
+
                 }
                 break;
             default:
