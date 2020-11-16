@@ -658,7 +658,6 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     builder_stack.push_back(condBuilder);
                     block_stack.push_back(conditionBasicBlock);
                     auto condition = buildSimpleOpts(wOpt->condintion->condition,list,conditionBasicBlock);
-
                     
                     IRBuilder<> ifBuilder(ifBasicBlock);
                     builder_stack.push_back(ifBuilder);
@@ -671,8 +670,7 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     builder_stack.push_back(afBuilder);
                     block_stack.push_back(afterBasicBlock);
 
-                    int s = builder_stack.size();
-                    builder_stack[s-3].CreateCondBr(condition,ifBasicBlock,afterBasicBlock);
+                    condBuilder.CreateCondBr(condition,ifBasicBlock,afterBasicBlock);
 
                 }
                 break;
@@ -681,6 +679,7 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     IfOpt *iOpt = (IfOpt*)currentOpt;
                     BasicBlock *ifBasicBlock = BasicBlock::Create(TheContext, "if", function_stack.back());
                     BasicBlock *elseBasicBlock = BasicBlock::Create(TheContext, "else", function_stack.back());
+                    BasicBlock *afterBasicBlock = BasicBlock::Create(TheContext, "afterIf", function_stack.back());
                     
                     auto condition = buildSimpleOpts(iOpt->condintion->condition,list,block);
 
@@ -690,6 +689,7 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     builder_stack.push_back(ifBuilder);
                     block_stack.push_back(ifBasicBlock);
                     buildInFuncOpts(iOpt->ifBlock->opt,iOpt->ifBlock->varlist,ifBasicBlock);
+                    builder_stack.back().CreateBr(afterBasicBlock);
                     
 
                     IRBuilder<> elseBuilder(elseBasicBlock);
@@ -700,15 +700,11 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     {
                         buildInFuncOpts(iOpt->elseBlock->opt,iOpt->elseBlock->varlist,elseBasicBlock);
                     }
+                    builder_stack.back().CreateBr(afterBasicBlock);
                     
-                    BasicBlock *afterBasicBlock = BasicBlock::Create(TheContext, "afterIf", function_stack.back());
                     IRBuilder<> afBuilder(afterBasicBlock);
                     builder_stack.push_back(afBuilder);
                     block_stack.push_back(afterBasicBlock);
-
-                    int s = builder_stack.size();
-                    builder_stack[s-3].CreateBr(afterBasicBlock);
-                    builder_stack[s-2].CreateBr(afterBasicBlock);
 
                 }
                 break;

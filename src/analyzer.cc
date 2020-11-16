@@ -890,8 +890,29 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
                     index ++;
                 }
 
-                block -> opt = firstOpt;
+                if (firstOpt)
+                {
+                    if (firstOpt -> kind < 0 || firstOpt -> kind > 400)
+                    {
+                        int tempIndex = 0;
+                        auto newNode = node->ptr[0];
+                        auto newTemp = readVariablesWithNode(newNode->ptr[0],list,0);
+                        while (tempIndex < index && !newTemp)
+                        {
+                            newNode = newNode -> ptr[1];
+                            tempIndex ++;
+                            newTemp = readVariablesWithNode(newNode->ptr[0],list,tempIndex);
+                        }
+                        
+                        
+                        newTemp -> next = firstOpt -> next;
+                        firstOpt = newTemp;
+                    }
+                    
+                }
+                
 
+                block -> opt = firstOpt;
             }
 
             if (block -> opt)
