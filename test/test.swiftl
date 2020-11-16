@@ -17,11 +17,14 @@ func main() {
     }
 
     while (a > 0) {
+        a = a - 1;
         if (add(a, 1) / 2 == 1) {
             
             break;
+        }else{
+            continue;
         }
-        a = a - 1;
+        
     }
     return ;
 }

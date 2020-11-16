@@ -45,7 +45,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
 
 void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
 void readSubFunctionNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count);
-void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int level);
+void checkParamters(ASTNode *node,FunctionNode* func,Operation* opt,VariableList *list,int level);
 void readVariablesInBlock(Block *block,VariableList* father,string name);
 optType getOptType(string raw);
 compareType getCompareType(string raw);
@@ -532,19 +532,20 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
                     
                 }
 
+                FuncCallOpt *newOp = new FuncCallOpt();
+                newOp -> kind = node -> kind;
+                newOp -> func = func;
+                newOp -> level = level;
+                newOp -> return_type = func -> return_type;
+
                 if (flag){
-                    checkParamters(node->ptr[0],func,list,level);
+                    checkParamters(node->ptr[0],func,newOp,list,level);
                 }else{
                     printf("Func not defined !, at line %d\n",node -> pos);
                     SemanticsError = true;
                     return nullptr;
                 }
 
-                FuncCallOpt *newOp = new FuncCallOpt();
-                newOp -> kind = node -> kind;
-                newOp -> func = func;
-                newOp -> level = level;
-                newOp -> return_type = func -> return_type;
                 return newOp;
                 
             }
@@ -965,9 +966,9 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
 
 }
 
-void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int level){
+void checkParamters(ASTNode *node,FunctionNode* func,Operation* opt,VariableList *list,int level){
     ASTNode *temp = node;
-    FuncCallOpt *funOpt = (FuncCallOpt *)currentOperation;
+    FuncCallOpt *funOpt = (FuncCallOpt *)opt;
     for (int i = 0; i < func->parameters.size(); i++)
     {
         if (temp == nullptr)
@@ -1031,7 +1032,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                         StaticValueOpt *newOp = new StaticValueOpt();
                         newOp->kind = INTEGER;
                         newOp -> return_type = Int;
-                        newOp -> data = get<int>(node->data);
+                        newOp -> data = get<int>(arg->data);
                         funOpt -> args.push_back(newOp);
                     }else{
                         printf("unexpected arg type at %d, expecting Int,at line %d\n",i+1,node -> pos);
@@ -1046,7 +1047,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                         StaticValueOpt *newOp = new StaticValueOpt();
                         newOp->kind = FLOAT;
                         newOp -> return_type = Float;
-                        newOp -> data = get<float>(node->data);
+                        newOp -> data = get<float>(arg->data);
                         funOpt -> args.push_back(newOp);
                     }else{
                         printf("unexpected arg type at %d, expecting Char, at line %d\n",i+1,node -> pos);
@@ -1061,7 +1062,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
                         StaticValueOpt *newOp = new StaticValueOpt();
                         newOp->kind = CHAR;
                         newOp -> return_type = Char;
-                        newOp -> data = get<char>(node->data);
+                        newOp -> data = get<char>(arg->data);
                         funOpt -> args.push_back(newOp);
                     }else{
                         printf("unexpected arg type at %d, expecting Float,at line %d\n",i+1,node -> pos);

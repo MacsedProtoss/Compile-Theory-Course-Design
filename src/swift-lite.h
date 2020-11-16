@@ -189,7 +189,7 @@ public:
 class FuncCallOpt : public Operation{
 public:
     FunctionNode *func;
-    vector<variant<VarUseOpt*,StaticValueOpt*>> args;
+    vector<Operation*> args;
     FuncCallOpt();
 };
 
