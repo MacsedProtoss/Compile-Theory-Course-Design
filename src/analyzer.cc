@@ -33,6 +33,7 @@ FuncAnnounceOpt::FuncAnnounceOpt() : func(nullptr){}
 VariableList *globalVars;
 int funcIndex = 0;
 bool SemanticsError = false;
+vector<int> whileStack;
 Operation *entryOperation;
 Operation *currentOperation;
 
@@ -708,7 +709,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                 break;
             case WHILE:
                 {
-
+                    whileStack.push_back(1);
                     WhileOpt *newOp = new WhileOpt();
                     newOp -> kind = WHILE;
                     newOp -> level = level;
@@ -720,11 +721,12 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     newOp -> condintion = condition;
                     
                     Block *ifBlock = new Block();
-                    ifBlock -> EntryNode = node->ptr[1] -> ptr[0];
+                    ifBlock -> EntryNode = node->ptr[1]->ptr[0];
                     
                     readVariablesInBlock(ifBlock,list,"INFUNC_WHILE");
 
                     newOp -> ifBlock = ifBlock;
+                    whileStack.pop_back();
                     return newOp;
                 
                 }
@@ -738,7 +740,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                 break;
             case CONTINUE: case BREAK:
                 {
-                    if (list -> namespacing != "INFUNC_WHILE")
+                    if (whileStack.size() == 0)
                     {
                         printf("unexpectedly found continue/break outside of while, at line %d\n",node -> pos);
                         SemanticsError = true;
@@ -787,7 +789,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                 break;
             case Exp_STATMENT:
                 {
-                    Operation *newOp = readSimpleOpt(node->ptr[0],list,STATEMENT_LIST,level,false);
+                    Operation *newOp = readVariablesWithNode(node->ptr[0],list,level);
                     return newOp;
                 }
                 
@@ -856,9 +858,8 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
         list -> father = father;
         block -> varlist = list;
     }
-    
+    block -> name = name;
     block -> opt = nullptr;
-    Operation *tempOpt = nullptr;
     if (node){
 
         switch ( (node->kind))
@@ -866,31 +867,76 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
         
         case WHOLE_STATEMENT:
             {
-
+                Operation *tempOpt = nullptr;
+                Operation *firstOpt = nullptr;
                 int index = 0;
                 ASTNode *temp = node->ptr[0];
                 while(temp){
                     Operation *newOp = readVariablesWithNode(temp->ptr[0],list,index);
                     if (newOp)
                     {
-                        if (block -> opt)
+                        if (firstOpt)
                         {
                             tempOpt -> next = newOp;
                             tempOpt = newOp;
                         }else{
-                            block -> opt = newOp;
+                            firstOpt = newOp;
                             tempOpt = newOp;
+                            printf("block %s first opt built with kind %d\n",block->name.c_str(),firstOpt -> kind);
                         }
                     }
                     
                     temp = temp->ptr[1];
                     index ++;
                 }
-                
+
+                block -> opt = firstOpt;
+
             }
+
+            if (block -> opt)
+            {
+                printf("built block %s with first opt kind %d\n",block->name.c_str(),block->opt->kind);
+            }
+            
 
             break;
 
+        case STATEMENT_LIST:
+            {
+                Operation *tempOpt = nullptr;
+                Operation *firstOpt = nullptr;
+                int index = 0;
+                ASTNode *temp = node;
+                while(temp){
+                    Operation *newOp = readVariablesWithNode(temp->ptr[0],list,index);
+                    if (newOp)
+                    {
+                        if (firstOpt)
+                        {
+                            tempOpt -> next = newOp;
+                            tempOpt = newOp;
+                        }else{
+                            firstOpt = newOp;
+                            tempOpt = newOp;
+                            printf("block %s first opt built with kind %d\n",block->name.c_str(),firstOpt -> kind);
+                        }
+                    }
+                    
+                    temp = temp->ptr[1];
+                    index ++;
+                }
+
+                block -> opt = firstOpt;
+
+            }
+
+            if (block -> opt)
+            {
+                printf("built block %s with first opt kind %d\n",block->name.c_str(),block->opt->kind);
+            }
+            
+            break;
         default:
             break;
         }
@@ -921,11 +967,11 @@ void checkParamters(ASTNode *node,FunctionNode* func,VariableList *list,int leve
             {
             case ID:
                 {
-                    if (auto ret = search_variable_symbol(get<string>(node->data),level,list)){
+                    if (auto ret = search_variable_symbol(get<string>(arg->data),level,list)){
                         VarUseOpt *newOp = new VarUseOpt();
                         newOp->kind = ID;
                         newOp -> type = ret.value()->type;
-                        newOp -> name = get<string>(node->data);
+                        newOp -> name = get<string>(arg->data);
                         if (param->type == ret.value()->type)
                         {
                             newOp -> return_type = newOp -> type;

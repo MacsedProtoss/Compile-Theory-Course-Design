@@ -158,8 +158,7 @@ void print_llvm_ir(Operation *head){
                 
                 buildInFuncOpts(fOpt -> func -> block -> opt,fOpt -> func -> block -> varlist,next_block);
 
-                builder_stack.pop_back();
-                block_stack.pop_back();
+                
                 
             }
             break;
@@ -329,7 +328,15 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                 RightOpt *rOpt = (RightOpt*)opt;
                 auto result = buildSimpleOpts(rOpt -> right,list,block);
                 auto returnValue = builder_stack.back().CreateNot(result);
-                return returnValue;
+                if (rOpt -> right ->return_type == Float)
+                {
+                    auto compare = builder_stack.back().CreateFCmpOEQ(returnValue,ConstantFP::getNaN(Type::getFloatTy(TheContext)));
+                    return compare;
+                }else{
+                    auto compare = builder_stack.back().CreateICmpEQ(returnValue,ConstantInt::get(Type::getInt32Ty(TheContext),0));
+                    return compare;
+                }
+                
             }
             break;
         case INCREASE: 
@@ -631,7 +638,7 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
                         auto r = buildSimpleOpts(rOpt -> right,list,block);
                         builder_stack.back().CreateRet(r);
                     }
-                    
+
                 }
                 break;
             case CONTINUE: case BREAK:
@@ -642,24 +649,30 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
             case WHILE:
                 {
                     WhileOpt *wOpt = (WhileOpt*)currentOpt;
-                    BasicBlock *ifBasicBlock = BasicBlock::Create(TheContext, "if", function_stack.back());
-                    BasicBlock *conditionBasicBlock = BasicBlock::Create(TheContext, "condition", function_stack.back());
-
-                    IRBuilder<> ifBuilder(ifBasicBlock);
-                    builder_stack.push_back(ifBuilder);
-                    block_stack.push_back(ifBasicBlock);
-                    buildInFuncOpts(wOpt->ifBlock->opt,wOpt->ifBlock->varlist,ifBasicBlock);
+                    BasicBlock *conditionBasicBlock = BasicBlock::Create(TheContext, "whileCondition", function_stack.back());
+                    BasicBlock *ifBasicBlock = BasicBlock::Create(TheContext, "whileIf", function_stack.back());
+                    
                     builder_stack.back().CreateBr(conditionBasicBlock);
-                    builder_stack.pop_back();
-                    block_stack.pop_back();
                     
                     IRBuilder<> condBuilder(conditionBasicBlock);
                     builder_stack.push_back(condBuilder);
                     block_stack.push_back(conditionBasicBlock);
                     auto condition = buildSimpleOpts(wOpt->condintion->condition,list,conditionBasicBlock);
-                    builder_stack.back().CreateCondBr(condition,ifBasicBlock,nullptr);
-                    builder_stack.pop_back();
-                    block_stack.pop_back();
+
+                    
+                    IRBuilder<> ifBuilder(ifBasicBlock);
+                    builder_stack.push_back(ifBuilder);
+                    block_stack.push_back(ifBasicBlock);
+                    buildInFuncOpts(wOpt->ifBlock->opt,wOpt->ifBlock->varlist,ifBasicBlock);
+                    builder_stack.back().CreateBr(conditionBasicBlock);
+                    
+                    BasicBlock *afterBasicBlock = BasicBlock::Create(TheContext, "afterWhile", function_stack.back());
+                    IRBuilder<> afBuilder(afterBasicBlock);
+                    builder_stack.push_back(afBuilder);
+                    block_stack.push_back(afterBasicBlock);
+
+                    int s = builder_stack.size();
+                    builder_stack[s-3].CreateCondBr(condition,ifBasicBlock,afterBasicBlock);
 
                 }
                 break;
@@ -671,24 +684,31 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     
                     auto condition = buildSimpleOpts(iOpt->condintion->condition,list,block);
 
+                    builder_stack.back().CreateCondBr(condition,ifBasicBlock,elseBasicBlock);
+
                     IRBuilder<> ifBuilder(ifBasicBlock);
                     builder_stack.push_back(ifBuilder);
                     block_stack.push_back(ifBasicBlock);
                     buildInFuncOpts(iOpt->ifBlock->opt,iOpt->ifBlock->varlist,ifBasicBlock);
-                    builder_stack.pop_back();
-                    block_stack.pop_back();
+                    
+
+                    IRBuilder<> elseBuilder(elseBasicBlock);
+                    builder_stack.push_back(elseBuilder);
+                    block_stack.push_back(elseBasicBlock);
 
                     if (currentOpt -> kind == IF_THEN_ELSE)
                     {
-                        IRBuilder<> elseBuilder(elseBasicBlock);
-                        builder_stack.push_back(elseBuilder);
-                        block_stack.push_back(elseBasicBlock);
                         buildInFuncOpts(iOpt->elseBlock->opt,iOpt->elseBlock->varlist,elseBasicBlock);
-                        builder_stack.pop_back();
-                        block_stack.pop_back();
                     }
                     
-                    builder_stack.back().CreateCondBr(condition,ifBasicBlock,elseBasicBlock);
+                    BasicBlock *afterBasicBlock = BasicBlock::Create(TheContext, "afterIf", function_stack.back());
+                    IRBuilder<> afBuilder(afterBasicBlock);
+                    builder_stack.push_back(afBuilder);
+                    block_stack.push_back(afterBasicBlock);
+
+                    int s = builder_stack.size();
+                    builder_stack[s-3].CreateBr(afterBasicBlock);
+                    builder_stack[s-2].CreateBr(afterBasicBlock);
 
                 }
                 break;
