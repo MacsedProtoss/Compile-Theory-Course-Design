@@ -288,7 +288,8 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     return nullptr;
                 }else{
                     auto ai = var->llvmAI;
-                    return ai;
+                    auto cl = builder_stack.back().CreateLoad(ai);
+                    return cl;
                 }
                 
             }
@@ -302,7 +303,7 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     {
                         int value = get<int>(newOp -> data);
                         if (newOp -> return_type == Float){
-                            auto v = ConstantInt::get(Type::getFloatTy(TheContext), (float)value);
+                            auto v = ConstantFP::get(Type::getFloatTy(TheContext),(float)value);
                             return v;
                         }else{
                             auto v = ConstantInt::get(Type::getInt32Ty(TheContext), value);
@@ -314,10 +315,10 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                         auto v = ConstantInt::get(Type::getInt32Ty(TheContext), value);
                         return v;
                     }
-                    // std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
+                    
                 }else{
                     float value = get<float>(newOp -> data);
-                    auto v = ConstantInt::get(Type::getFloatTy(TheContext), value);
+                    auto v = ConstantFP::get(Type::getFloatTy(TheContext),value);
                     return v;
                 }
                 
@@ -327,9 +328,7 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
             {
                 RightOpt *rOpt = (RightOpt*)opt;
                 auto result = buildSimpleOpts(rOpt -> right,list,block);
-                std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
-                tempIndex ++;
-                auto returnValue = builder_stack.back().CreateNot(result,tempName);
+                auto returnValue = builder_stack.back().CreateNot(result);
                 return returnValue;
             }
             break;
@@ -365,14 +364,15 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     {
                         auto l = buildSimpleOpts(cOpt -> left,list,block);
                         auto r = buildSimpleOpts(cOpt -> right,list,block);
-                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
-                        tempIndex ++;
+                        
                         if (useFloat)
                         {
-                            auto result = builder_stack.back().CreateFCmpOEQ(l,r,tempName);
+                            
+                            auto result = builder_stack.back().CreateFCmpOEQ(l,r);
                             return result;
                         }else{
-                            auto result = builder_stack.back().CreateICmpEQ(l,r,tempName);
+                            
+                            auto result = builder_stack.back().CreateICmpEQ(l,r);
                             return result;
                         }
                     }
@@ -381,14 +381,15 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     {
                         auto l = buildSimpleOpts(cOpt -> left,list,block);
                         auto r = buildSimpleOpts(cOpt -> right,list,block);
-                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
-                        tempIndex ++;
+                        
                         if (useFloat)
                         {
-                            auto result = builder_stack.back().CreateFCmpONE(l,r,tempName);
+                            
+                            auto result = builder_stack.back().CreateFCmpONE(l,r);
                             return result;
                         }else{
-                            auto result = builder_stack.back().CreateICmpNE(l,r,tempName);
+                            
+                            auto result = builder_stack.back().CreateICmpNE(l,r);
                             return result;
                         }
                     }
@@ -397,14 +398,13 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     {
                         auto l = buildSimpleOpts(cOpt -> left,list,block);
                         auto r = buildSimpleOpts(cOpt -> right,list,block);
-                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
-                        tempIndex ++;
+                        
                         if (useFloat)
                         {
-                            auto result = builder_stack.back().CreateFCmpOGT(l,r,tempName);
+                            auto result = builder_stack.back().CreateFCmpOGT(l,r);
                             return result;
                         }else{
-                            auto result = builder_stack.back().CreateICmpSGT(l,r,tempName);
+                            auto result = builder_stack.back().CreateICmpSGT(l,r);
                             return result;
                         }
                     }
@@ -413,14 +413,13 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     {
                         auto l = buildSimpleOpts(cOpt -> left,list,block);
                         auto r = buildSimpleOpts(cOpt -> right,list,block);
-                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
-                        tempIndex ++;
+                        
                         if (useFloat)
                         {
-                            auto result = builder_stack.back().CreateFCmpOLT(l,r,tempName);
+                            auto result = builder_stack.back().CreateFCmpOLT(l,r);
                             return result;
                         }else{
-                            auto result = builder_stack.back().CreateICmpSLT(l,r,tempName);
+                            auto result = builder_stack.back().CreateICmpSLT(l,r);
                             return result;
                         }
                     }
@@ -429,14 +428,13 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     {
                         auto l = buildSimpleOpts(cOpt -> left,list,block);
                         auto r = buildSimpleOpts(cOpt -> right,list,block);
-                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
-                        tempIndex ++;
+                        
                         if (useFloat)
                         {
-                            auto result = builder_stack.back().CreateFCmpOGE(l,r,tempName);
+                            auto result = builder_stack.back().CreateFCmpOGE(l,r);
                             return result;
                         }else{
-                            auto result = builder_stack.back().CreateICmpSGE(l,r,tempName);
+                            auto result = builder_stack.back().CreateICmpSGE(l,r);
                             return result;
                         }
                     }
@@ -445,14 +443,13 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     {
                         auto l = buildSimpleOpts(cOpt -> left,list,block);
                         auto r = buildSimpleOpts(cOpt -> right,list,block);
-                        std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
-                        tempIndex ++;
+                        
                         if (useFloat)
                         {
-                            auto result = builder_stack.back().CreateFCmpOLE(l,r,tempName);
+                            auto result = builder_stack.back().CreateFCmpOLE(l,r);
                             return result;
                         }else{
-                            auto result = builder_stack.back().CreateICmpSLE(l,r,tempName);
+                            auto result = builder_stack.back().CreateICmpSLE(l,r);
                             return result;
                         }
                     }
@@ -466,14 +463,13 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                 NormalOpt *nOpt = (NormalOpt *)opt;
                 auto l = buildSimpleOpts(nOpt -> left,list,block);
                 auto r = buildSimpleOpts(nOpt -> right,list,block);
-                std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
-                tempIndex ++;
+                
                 if (opt -> kind == AND)
                 {
-                    auto result = builder_stack.back().CreateAnd(l,r,tempName);
-                return result;
+                    auto result = builder_stack.back().CreateAnd(l,r);
+                    return result;
                 }else{
-                    auto result = builder_stack.back().CreateOr(l,r,tempName);
+                    auto result = builder_stack.back().CreateOr(l,r);
                     return result;
                 }
                 
@@ -539,8 +535,7 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
 
         case FUNC_CALL:
             {
-                std::string tempName("PreservedTempNameWithIndex" + std::to_string(tempIndex));
-                tempIndex ++;
+                
 
                 FuncCallOpt *fOpt = (FuncCallOpt*)opt;
                 auto [fn, fnType] = function_table[fOpt -> func -> name];
@@ -568,7 +563,8 @@ Value* buildSimpleOpts(Operation *opt,VariableList *list,BasicBlock *block){
                     params.push_back(doneValue);
 
                 }
-                auto result = builder_stack.back().CreateCall(fn,params,tempName);
+                
+                auto result = builder_stack.back().CreateCall(fn,params);
                 return result;
             }
             
@@ -608,6 +604,7 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
                         }
                     }else{
                         auto l = buildSimpleOpts(nOpt -> left,list,block);
+
                         builder_stack.back().CreateStore(r,l);
                     }
                     
