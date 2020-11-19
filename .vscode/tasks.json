@@ -19,7 +19,7 @@
                 "-lLLVM-10",
                 "-std=c++2a",
                 "-o",
-                "./parser"
+                "./compiler"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
