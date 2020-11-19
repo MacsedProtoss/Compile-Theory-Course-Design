@@ -31,6 +31,8 @@ using namespace llvm;
 using std::get, std::nullopt;
 using std::string, std::unordered_map, std::vector, std::variant, std::shared_ptr, std::tuple, std::optional;
 
+#define PRINT_DEBUG_MESSAGE 1
+#define PRINT_DUALITY   1
 #define PRINT_AST 1
 #define PRINT_SYMBOL_TABLE 1
 #define PRINT_LLVM_IR 1
@@ -236,4 +238,4 @@ FunctionNode* get_function_symbol(const int index);
 optional<Variable*> search_variable_symbol(const string &name,int line,VariableList *list);
 Variable* search_variable_symbol_llvm(const string &name,VariableList *list);
 void readVaribales(ASTNode *node);
-void insertVariable(Variable* var,VariableList *list,int line);
+void insertVariable(vector<Variable*> var,VariableList *list,int line);

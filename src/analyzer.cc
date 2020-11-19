@@ -189,7 +189,8 @@ void readFuncs(ASTNode *node, variant<Parameter*, FunctionNode*> prev){
                     
                     vars.push_back(variable);
                 }
-                func -> block ->varlist->variables.insert(std::make_pair(-1,vars));
+                insertVariable(vars,func -> block ->varlist,-1);
+                // func -> block ->varlist->variables.insert(std::make_pair(-1,vars));
             }
             break;
         case EXT_DEF_LIST:
@@ -605,7 +606,8 @@ Operation *readVarDefineOpt(ASTNode* node,VariableNode* var,VariableList* list,i
 
                         vars.push_back(variable);
                     }
-                    list -> variables.insert(std::make_pair(level,vars));
+                    insertVariable(vars,list,level);
+                    // list -> variables.insert(std::make_pair(level,vars));
 
                     DefineOpt *newOp = new DefineOpt();
                     newOp -> kind = VAR_DEFINE;
@@ -883,7 +885,11 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
                         }else{
                             firstOpt = newOp;
                             tempOpt = newOp;
-                            printf("block %s first opt built with kind %d\n",block->name.c_str(),firstOpt -> kind);
+                            if (PRINT_DEBUG_MESSAGE)
+                            {
+                                printf("block %s first opt built with kind %d\n",block->name.c_str(),firstOpt -> kind);
+                            }
+                            
                         }
                     }
                     
@@ -916,7 +922,7 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
                 block -> opt = firstOpt;
             }
 
-            if (block -> opt)
+            if (block -> opt && PRINT_DEBUG_MESSAGE)
             {
                 printf("built block %s with first opt kind %d\n",block->name.c_str(),block->opt->kind);
             }
@@ -953,7 +959,7 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
 
             }
 
-            if (block -> opt)
+            if (block -> opt && PRINT_DEBUG_MESSAGE)
             {
                 printf("built block %s with first opt kind %d\n",block->name.c_str(),block->opt->kind);
             }

@@ -13,9 +13,11 @@ VariableList* createSubList(VariableList *father,string name){
 
 void insertVariable(vector<Variable*> var,VariableList *list,int line){
     (list->variables).insert(std::make_pair(line,var));
-    for (int i = 0; i < var.size(); i++)
-    {
-        printf("inserted var %s into list %s with line %d",var[i]->name.c_str(),list->namespacing.c_str(),line);
+    if(PRINT_SYMBOL_TABLE){
+        for (int i = 0; i < var.size(); i++)
+        {
+            printf("inserted var %s into list %s with line %d\n",var[i]->name.c_str(),list->namespacing.c_str(),line);
+        }
     }
 }
 

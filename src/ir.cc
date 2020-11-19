@@ -78,7 +78,7 @@ void print_llvm_ir(Operation *head){
 
     Type *preAssignreturnType = Type::getVoidTy(TheContext);
     FunctionType *reAssignfunctionType = FunctionType::get(preAssignreturnType,false);
-    Function *fpreAssignunctionValue = Function::Create(reAssignfunctionType,Function::ExternalLinkage,"preservedFunction_Global_var_assign_init",TheModule);
+    Function *fpreAssignunctionValue = Function::Create(reAssignfunctionType,Function::ExternalLinkage,"Preserved_Function_Global_Var_Assign_Init",TheModule);
     BasicBlock *preAssignBlock = BasicBlock::Create(TheContext,"entry",fpreAssignunctionValue);
     IRBuilder<> preAssignBuilder(preAssignBlock);
 
@@ -182,7 +182,11 @@ void print_llvm_ir(Operation *head){
     std::unique_ptr<Module> ptr(&TheModule);
     ExecutionEngine *engine = EngineBuilder(std::move(ptr)).create();
     engine->finalizeObject();
-    engine->runFunction(function_table["main"].first, {});
+    engine->runFunction(fpreAssignunctionValue,{});
+    if (function_table["main"].first)
+    {
+        engine->runFunction(function_table["main"].first, {});
+    }
 
 }
 

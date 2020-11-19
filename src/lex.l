@@ -18,50 +18,50 @@ typedef union {
 %}
 
 %%
-"var"										{strcpy(yylval.idValue,yytext);  return NEW;}
-":"											{return ANNOUNCE;}
-"Char"										{strcpy(yylval.idValue,yytext);  return TYPE;}
-"Int"										{strcpy(yylval.idValue,yytext);  return TYPE;}
-"Float"										{strcpy(yylval.idValue,yytext);  return TYPE;}
-"return"     								{return RETURN;}
-"if"         								{return IF;}
-"else"       								{return ELSE;}
-"while"      								{return WHILE;}
-"break"      								{return BREAK;}
-"continue"      							{return CONTINUE;}
+"var"										{if(PRINT_DUALITY){printf("(token,var)\n");};strcpy(yylval.idValue,yytext);  return NEW;}
+":"											{if(PRINT_DUALITY){printf("(token,:)\n");};return ANNOUNCE;}
+"Char"										{if(PRINT_DUALITY){printf("(token,Char(type))\n");};strcpy(yylval.idValue,yytext);  return TYPE;}
+"Int"										{if(PRINT_DUALITY){printf("(token,Int(type))\n");};strcpy(yylval.idValue,yytext);  return TYPE;}
+"Float"										{if(PRINT_DUALITY){printf("(token,Float(type))\n");};strcpy(yylval.idValue,yytext);  return TYPE;}
+"return"     								{if(PRINT_DUALITY){printf("(token,return)\n");};return RETURN;}
+"if"         								{if(PRINT_DUALITY){printf("(token,if)\n");};return IF;}
+"else"       								{if(PRINT_DUALITY){printf("(token,else)\n");};return ELSE;}
+"while"      								{if(PRINT_DUALITY){printf("(token,while)\n");};return WHILE;}
+"break"      								{if(PRINT_DUALITY){printf("(token,break)\n");};return BREAK;}
+"continue"      							{if(PRINT_DUALITY){printf("(token,continue)\n");};return CONTINUE;}
 
-"func"										{return FUNC;}
-"->"										{return FUNC_RETURN_TYPE;}
+"func"										{if(PRINT_DUALITY){printf("(token,func)\n");};return FUNC;}
+"->"										{if(PRINT_DUALITY){printf("(token,->)\n");};return FUNC_RETURN_TYPE;}
 
-">"|"<"|">="|"<="|"=="|"!="					{strcpy(yylval.cmpCommand,yytext);	return COMPARE;}
+">"|"<"|">="|"<="|"=="|"!="					{if(PRINT_DUALITY){printf("(token,compare(%s))\n",yytext);};strcpy(yylval.cmpCommand,yytext);	return COMPARE;}
 
-"&&"										{return AND;}
-"||"										{return OR;}
-"!"											{return NOT;}
+"&&"										{if(PRINT_DUALITY){printf("(token,&&)\n");};return AND;}
+"||"										{if(PRINT_DUALITY){printf("(token,||)\n");};return OR;}
+"!"											{if(PRINT_DUALITY){printf("(token,!)\n");};return NOT;}
 
-[+]											{return PLUS;}
-[-]											{return MINUS;}
-[*]											{return MULTI;}
-[/]											{return DIVID;}
+[+]											{if(PRINT_DUALITY){printf("(token,+)\n");};return PLUS;}
+[-]											{if(PRINT_DUALITY){printf("(token,-)\n");};return MINUS;}
+[*]											{if(PRINT_DUALITY){printf("(token,*)\n");};return MULTI;}
+[/]											{if(PRINT_DUALITY){printf("(token,/)\n");};return DIVID;}
 
-"++"										{return INCREASE;}
-"--"										{return DECREASE;}
+"++"										{if(PRINT_DUALITY){printf("(token,++)\n");};return INCREASE;}
+"--"										{if(PRINT_DUALITY){printf("(token,--)\n");};return DECREASE;}
 
-[(]											{return LBR;}
-[)]											{return RBR;}
-[{]											{return LCBR;}
-[}]											{return RCBR;}
+[(]											{if(PRINT_DUALITY){printf("(token,'(')\n");};return LBR;}
+[)]											{if(PRINT_DUALITY){printf("(token,')')\n");};return RBR;}
+[{]											{if(PRINT_DUALITY){printf("(token,'{')\n");};return LCBR;}
+[}]											{if(PRINT_DUALITY){printf("(token,'}')\n");};return RCBR;}
 
-[=]											{return ASSIGN;}
+[=]											{if(PRINT_DUALITY){printf("(token,=)\n");};return ASSIGN;}
 
-[,]											{return COMMA;}
+[,]											{if(PRINT_DUALITY){printf("(token,',')\n");};return COMMA;}
 
-['][A-Za-z0-9_][']							{yylval.charValue=yytext[1];  return CHAR;}
-[+-]?0[.][0-9]*|[+-]?[1-9][0-9]*[.][0-9]*       {yylval.floatValue=atof(yytext); return FLOAT;}
-0|[+-]?[1-9][0-9]*                          {yylval.intValue=atoi(yytext);	return INTEGER;}
-[_a-zA-Z][_a-zA-Z0-9]*                      {strcpy(yylval.idValue,yytext);	return ID;}
+['][A-Za-z0-9_][']							{if(PRINT_DUALITY){printf("(token,charValue(%c))\n",yytext[1]);};yylval.charValue=yytext[1];  return CHAR;}
+[+-]?0[.][0-9]*|[+-]?[1-9][0-9]*[.][0-9]*       {if(PRINT_DUALITY){printf("(token,floatValue(%s))\n",yytext);};yylval.floatValue=atof(yytext); return FLOAT;}
+0|[+-]?[1-9][0-9]*                          {if(PRINT_DUALITY){printf("(token,intValue(%s))\n",yytext);};yylval.intValue=atoi(yytext);	return INTEGER;}
+[_a-zA-Z][_a-zA-Z0-9]*                      {if(PRINT_DUALITY){printf("(token,ID(%s))\n",yytext);};strcpy(yylval.idValue,yytext);	return ID;}
 
-[\n;]	                                	{if(yytext[0]=='\n'){yylineno++;yycolumn=1;};return EOL;}
+[\n;]	                                	{if(PRINT_DUALITY){printf("(token,EOL)\n");};if(yytext[0]=='\n'){yylineno++;yycolumn=1;};return EOL;}
 [ \r\t]     								{}
 
 .                                           {printf("Error type A :Mysterious character \"%s\"\n\t at Line %d\n", yytext, yylineno);}

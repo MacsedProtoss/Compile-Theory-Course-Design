@@ -8,7 +8,9 @@ std::vector<FunctionNode*> functionArr;
 void insertFunc(std::string name,FunctionNode* symbol){
     functionMap.insert(std::make_pair(name,symbol));
     functionArr.push_back(symbol);
-    printf("function inserted : %s\n",(symbol->name).c_str());
+    if(PRINT_SYMBOL_TABLE){
+        printf("function inserted : %s\n",(symbol->name).c_str());
+    }
 }
 
 optional<FunctionNode*> search_function_symbol(const string &name){
