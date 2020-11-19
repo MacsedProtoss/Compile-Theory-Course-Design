@@ -1,0 +1,88 @@
+; ModuleID = 'app'
+source_filename = "app"
+
+@c = global i32 0
+@d = global i32 0
+@e = global i32 0
+@f = global i32 0
+
+define void @Preserved_Function_Global_Var_Assign_Init() {
+entry:
+  store i32 19, i32* @c
+  ret void
+}
+
+define i32 @add(i32 %0, i32 %1) {
+entry:
+  %2 = mul i32 %1, 2
+  %3 = add i32 %0, %2
+  %4 = add i32 %3, 3
+  ret i32 %4
+}
+
+define void @main() {
+entry:
+  %a = alloca i32
+  store i32 12, i32* %a
+  %b = alloca float
+  store float 0x4013333340000000, float* %b
+  %0 = load i32, i32* %a
+  %1 = add i32 %0, 1
+  %2 = load i32, i32* %a
+  %3 = xor i32 %2, -1
+  %4 = icmp eq i32 %3, 0
+  br i1 %4, label %if, label %else
+
+if:                                               ; preds = %entry
+  br label %afterIf
+
+else:                                             ; preds = %entry
+  br label %afterIf
+
+afterIf:                                          ; preds = %else, %if
+  br label %whileCondition
+
+whileCondition:                                   ; preds = %else2, %afterIf
+  %5 = load i32, i32* %a
+  %6 = icmp eq i32 %5, 0
+  br i1 %6, label %whileIf, label %afterWhile
+
+whileIf:                                          ; preds = %whileCondition
+  %7 = load i32, i32* %a
+  %8 = sub i32 %7, 1
+  store i32 %8, i32* %a
+  %9 = load i32, i32* %a
+  %10 = call i32 @add(i32 %9, i32 1)
+  %11 = sdiv i32 %10, 2
+  %12 = icmp eq i32 %11, 1
+  br i1 %12, label %if1, label %else2
+
+afterWhile:                                       ; preds = %whileCondition, %afterIf3, %afterWhile6
+  %13 = load i32, i32* %a
+  %14 = add i32 %13, 1
+  %15 = add i32 20, %14
+  store i32 %15, i32* %a
+  ret void
+
+if1:                                              ; preds = %whileIf
+  %t = alloca i32
+  store i32 0, i32* %t
+  br label %whileCondition4
+
+else2:                                            ; preds = %whileIf
+  br label %whileCondition
+
+afterIf3:                                         ; No predecessors!
+  br label %afterWhile
+
+whileCondition4:                                  ; preds = %whileIf5, %if1
+  %16 = load i32, i32* %t
+  %17 = icmp eq i32 %16, 5
+  br i1 %17, label %whileIf5, label %afterWhile6
+
+whileIf5:                                         ; preds = %whileCondition4
+  br label %whileCondition4
+
+afterWhile6:                                      ; preds = %whileCondition4
+  br label %afterWhile
+}

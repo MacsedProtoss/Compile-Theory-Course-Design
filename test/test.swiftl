@@ -21,13 +21,13 @@ func main() {
         if (add(a, 1) / 2 == 1) {
             var t : Int = 0
             while (t < 5){
-                t++
+                
             }
             break;
         }else{
             continue;
         }
-        
+        break;
     }
     return ;
 }
