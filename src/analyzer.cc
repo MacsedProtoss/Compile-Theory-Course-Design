@@ -46,7 +46,7 @@ Operation *readSimpleOpt(ASTNode* node,VariableList* list,int prevKind,int level
 void readFuncs(ASTNode *node,variant<Parameter*, FunctionNode*> prev);
 void readSubFunctionNodes(ASTNode *node,variant<Parameter*, FunctionNode*> prev,int count);
 void checkParamters(ASTNode *node,FunctionNode* func,Operation* opt,VariableList *list,int level);
-void readVariablesInBlock(Block *block,VariableList* father,string name);
+void readVariablesInBlock(Block *block,VariableList* father,string name,int enterLine);
 optType getOptType(string raw);
 compareType getCompareType(string raw);
 variant<char,int,float> getStaticValue(variant<int,float,string,char> origin,optType type);
@@ -286,7 +286,7 @@ void readVariablesGlobal(ASTNode* node,int level){
                 {
                     FunctionNode *func = get_function_symbol(funcIndex);
 
-                    readVariablesInBlock(func->block,globalVars,func->name);
+                    readVariablesInBlock(func->block,globalVars,func->name,0);
                     funcIndex++;
 
                     FuncAnnounceOpt *newOp = new FuncAnnounceOpt();
@@ -676,7 +676,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     Block *ifBlock = new Block();
                     ifBlock -> EntryNode = node->ptr[1] -> ptr[0];
                     
-                    readVariablesInBlock(ifBlock,list,"INFUNC_IF_THEN");
+                    readVariablesInBlock(ifBlock,list,"INFUNC_IF_THEN",level);
 
                     newOp -> ifBlock = ifBlock;
                     return newOp;
@@ -702,8 +702,8 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     ifBlock -> EntryNode = node->ptr[1] -> ptr[0];
                     elesBlock -> EntryNode = node -> ptr[2] -> ptr[0];
                     
-                    readVariablesInBlock(ifBlock,list,"INFUNC_IF_THEN_ELSE");
-                    readVariablesInBlock(elesBlock,list,"INFUNC_IF_THEN_ELSE");
+                    readVariablesInBlock(ifBlock,list,"INFUNC_IF_THEN_ELSE",level);
+                    readVariablesInBlock(elesBlock,list,"INFUNC_IF_THEN_ELSE",level);
                     newOp -> ifBlock = ifBlock;
                     newOp -> elseBlock = elesBlock;
                     return newOp;
@@ -726,7 +726,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
                     Block *ifBlock = new Block();
                     ifBlock -> EntryNode = node->ptr[1]->ptr[0];
                     
-                    readVariablesInBlock(ifBlock,list,"INFUNC_WHILE");
+                    readVariablesInBlock(ifBlock,list,"INFUNC_WHILE",level);
 
                     newOp -> ifBlock = ifBlock;
                     whileStack.pop_back();
@@ -849,7 +849,7 @@ Operation* readVariablesWithNode(ASTNode *node,VariableList *list,int level){
     return nullptr;
 }
 
-void readVariablesInBlock(Block *block,VariableList* father,string name){
+void readVariablesInBlock(Block *block,VariableList* father,string name,int enterLine){
     ASTNode *node = block -> EntryNode;
     VariableList *list;
     if (father == globalVars)
@@ -859,6 +859,7 @@ void readVariablesInBlock(Block *block,VariableList* father,string name){
         list = new VariableList();
         list ->namespacing = name;
         list -> father = father;
+        list->enterLine = enterLine;
         block -> varlist = list;
     }
     block -> name = name;

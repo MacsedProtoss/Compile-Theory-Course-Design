@@ -144,6 +144,7 @@ public:
     VariableList *father;
     string namespacing;
     std::unordered_map<int, vector<Variable*>> variables;
+    int enterLine;
     VariableList();
 };
 

@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 Variable::Variable() : hasValue(false),llvmAI(nullptr) {}
-VariableList::VariableList() : father(nullptr){}
+VariableList::VariableList() : father(nullptr),enterLine(1){}
 
 VariableList* createSubList(VariableList *father,string name){
     VariableList *son = new VariableList();
@@ -44,7 +44,7 @@ optional<Variable*> search_variable_symbol(const string &name,int line,VariableL
     }
     
     if (list->father != nullptr){
-        return search_variable_symbol(name,list->father->variables.size(),list->father);
+        return search_variable_symbol(name,list->enterLine,list->father);
     }
     
     return nullopt;

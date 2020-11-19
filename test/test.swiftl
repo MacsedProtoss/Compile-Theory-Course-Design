@@ -19,7 +19,10 @@ func main() {
     while (a > 0) {
         a = a - 1;
         if (add(a, 1) / 2 == 1) {
-            
+            var t : Int = 0
+            while (t < 5){
+                t++
+            }
             break;
         }else{
             continue;
