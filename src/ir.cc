@@ -37,6 +37,7 @@ ConstantInt* const_int_val = ConstantInt::get(TheContext, APInt(32,0));
 ConstantInt* const_char_val = ConstantInt::get(TheContext, APInt(32,0));
 ConstantFP* const_float_val = ConstantFP::get(TheContext, APFloat(0.0));
 
+tuple<Function *, FunctionType *, Function *, FunctionType *> inject_print_function(LLVMContext &ctx, IRBuilder<> &builder, Module &_module);
 // auto create_goto = [&](const string &label) -> void {
 //     auto *current_basic_block = block_stack.back();
 //     if (finished_block.count(current_basic_block))
@@ -75,6 +76,10 @@ ConstantFP* const_float_val = ConstantFP::get(TheContext, APFloat(0.0));
 // }
 void print_llvm_ir(Operation *head){
     builder_stack.emplace_back(IRBuilder<>(TheContext));
+
+    auto [printf_func, printf_func_type, print_int_func, print_int_func_type] = inject_print_function(TheContext, builder_stack.back(), TheModule);
+    function_table["printf"] = {printf_func, printf_func_type};
+    function_table["printI"] = {print_int_func, print_int_func_type};
 
     Type *preAssignreturnType = Type::getVoidTy(TheContext);
     FunctionType *reAssignfunctionType = FunctionType::get(preAssignreturnType,false);
@@ -183,10 +188,7 @@ void print_llvm_ir(Operation *head){
     ExecutionEngine *engine = EngineBuilder(std::move(ptr)).create();
     engine->finalizeObject();
     engine->runFunction(fpreAssignunctionValue,{});
-    if (function_table["main"].first)
-    {
-        engine->runFunction(function_table["main"].first, {});
-    }
+    engine->runFunction(function_table["main"].first, {});
     
 
 }
@@ -804,4 +806,36 @@ Value* getllvmAIVar(Operation *opt,VariableList *list,BasicBlock *block){
         
         return ai;
     }
+}
+
+tuple<Function *, FunctionType *, Function *, FunctionType *> inject_print_function(LLVMContext &ctx, IRBuilder<> &builder, Module &_module)
+{
+    vector<Type *> printfArgsTypes({Type::getInt8PtrTy(ctx)});
+
+    Function *printf_func = _module.getFunction("printf");
+    FunctionType *printf_func_type = FunctionType::get(
+        Type::getInt32Ty(_module.getContext()),
+        {Type::getInt8PtrTy(_module.getContext())},
+        true);
+    if (printf_func == nullptr)
+    {
+        printf_func = Function::Create(printf_func_type, GlobalValue::ExternalLinkage, "printf", _module);
+        printf_func->setCallingConv(llvm::CallingConv::C);
+    }
+
+    FunctionType *print_int_func_type = FunctionType::get(
+        Type::getInt32Ty(ctx),
+        {Type::getInt32Ty(_module.getContext())},
+        false);
+    Function *print_int_func = Function::Create(print_int_func_type, GlobalValue::ExternalLinkage, "printI", _module);
+    BasicBlock *block = BasicBlock::Create(ctx, "", print_int_func);
+    IRBuilder<> block_builder(block);
+
+    vector<Value *> parameters = {
+        block_builder.CreateGlobalStringPtr("%d\n"),
+        print_int_func->getArg(0)};
+    auto ret = block_builder.CreateCall(printf_func, parameters, "");
+    block_builder.CreateRet(ret);
+
+    return {printf_func, printf_func_type, print_int_func, print_int_func_type};
 }

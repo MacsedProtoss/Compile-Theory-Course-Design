@@ -31,7 +31,7 @@ FuncAnnounceOpt::FuncAnnounceOpt() : func(nullptr){}
 
 
 VariableList *globalVars;
-int funcIndex = 0;
+int funcIndex = 2;
 bool SemanticsError = false;
 vector<int> whileStack;
 Operation *entryOperation;
@@ -1094,7 +1094,7 @@ void checkParamters(ASTNode *node,FunctionNode* func,Operation* opt,VariableList
 void readVaribales(ASTNode *node){
     globalVars = new VariableList();
     globalVars->namespacing = "global";
-    funcIndex = 0;
+    funcIndex = 2;
     readVariablesGlobal(node,0);
     if (SemanticsError)
     {

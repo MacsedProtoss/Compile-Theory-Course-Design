@@ -1,10 +1,18 @@
 ; ModuleID = 'app'
 source_filename = "app"
 
+@0 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 @c = global i32 0
 @d = global i32 0
 @e = global i32 0
 @f = global i32 0
+
+declare i32 @printf(i8*, ...)
+
+define i32 @printI(i32 %0) {
+  %2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i32 0, i32 0), i32 %0)
+  ret i32 %2
+}
 
 define void @Preserved_Function_Global_Var_Assign_Init() {
 entry:
@@ -58,10 +66,6 @@ whileIf:                                          ; preds = %whileCondition
   br i1 %12, label %if1, label %else2
 
 afterWhile:                                       ; preds = %whileCondition, %afterIf3, %afterWhile6
-  %13 = load i32, i32* %a
-  %14 = add i32 %13, 1
-  %15 = add i32 20, %14
-  store i32 %15, i32* %a
   ret void
 
 if1:                                              ; preds = %whileIf
@@ -76,11 +80,13 @@ afterIf3:                                         ; No predecessors!
   br label %afterWhile
 
 whileCondition4:                                  ; preds = %whileIf5, %if1
-  %16 = load i32, i32* %t
-  %17 = icmp eq i32 %16, 5
-  br i1 %17, label %whileIf5, label %afterWhile6
+  %13 = load i32, i32* %t
+  %14 = icmp eq i32 %13, 5
+  br i1 %14, label %whileIf5, label %afterWhile6
 
 whileIf5:                                         ; preds = %whileCondition4
+  %15 = load i32, i32* %t
+  %16 = call i32 @printI(i32 %15)
   br label %whileCondition4
 
 afterWhile6:                                      ; preds = %whileCondition4
