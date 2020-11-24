@@ -3,6 +3,8 @@
 #include "memory"
 #include "list"
 #include "unordered_set"
+#include <fstream>
+
 
 using std::pair, std::tuple, std::list, std::make_unique, std::unordered_set;
 
@@ -180,7 +182,7 @@ void print_llvm_ir(Operation *head){
     
     if constexpr (PRINT_LLVM_IR == 1)
     {
-        TheModule.print(errs(), nullptr);
+        TheModule.print(outs(), nullptr);
     }
     verifyModule(TheModule, &(errs()));
 
@@ -761,7 +763,9 @@ void buildInFuncOpts(Operation *opt,VariableList *list,BasicBlock *block){
 
         currentOpt = currentOpt -> next;
         debugV ++;
-        printf("ir function progress %s %d\n",list->namespacing.c_str(),debugV);
+        if(PRINT_DEBUG_MESSAGE){
+            printf("ir function progress %s %d\n",list->namespacing.c_str(),debugV);
+        }
     }
     
 

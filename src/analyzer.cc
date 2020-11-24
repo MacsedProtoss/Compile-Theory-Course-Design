@@ -948,7 +948,10 @@ void readVariablesInBlock(Block *block,VariableList* father,string name,int ente
                         }else{
                             firstOpt = newOp;
                             tempOpt = newOp;
-                            printf("block %s first opt built with kind %d\n",block->name.c_str(),firstOpt -> kind);
+                            if (PRINT_DEBUG_MESSAGE)
+                            {
+                                printf("block %s first opt built with kind %d\n",block->name.c_str(),firstOpt -> kind);
+                            }
                         }
                     }
                     

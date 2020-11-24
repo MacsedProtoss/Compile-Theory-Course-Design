@@ -31,10 +31,10 @@ using namespace llvm;
 using std::get, std::nullopt;
 using std::string, std::unordered_map, std::vector, std::variant, std::shared_ptr, std::tuple, std::optional;
 
-#define PRINT_DEBUG_MESSAGE 1
-#define PRINT_DUALITY   1
-#define PRINT_AST 1
-#define PRINT_SYMBOL_TABLE 1
+#define PRINT_DEBUG_MESSAGE 0
+#define PRINT_DUALITY   0
+#define PRINT_AST 0
+#define PRINT_SYMBOL_TABLE 0
 #define PRINT_LLVM_IR 1
 
 enum optType{
